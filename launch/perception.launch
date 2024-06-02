@@ -1,0 +1,30 @@
+<launch>
+    <arg name="run_perception_only" default="true" />
+
+    <!--   static tf -->
+    <node pkg="cashmerebot" type="tf_manager.py" name="tf_manager" />
+
+    <!--   rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find cashmerebot)/rviz/perception.rviz" if="$(arg run_perception_only)"/>
+
+    <!--   depth map to point cloud -->
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+
+    <node pkg="nodelet" type="nodelet" name="nodelet_point_cloud_xyz" args="load depth_image_proc/point_cloud_xyz nodelet_manager">
+        <remap from="camera_info" to="/front_depth_cam/camera_info"/>
+        <remap from="image_rect" to="/front_depth_cam/image_raw"/>
+<!--         moveit mesh_filter is not working properly -->
+<!--         <remap from="camera_info" to="/filtered/camera_info"/> -->
+<!--         <remap from="image_rect" to="/filtered/depth"/> -->
+        <remap from="points" to="/front_depth_cam/points"/>
+    </node>
+
+    <!--   transform pc2 from cam frame to ur5 base frame -->
+    <node pkg="cashmerebot" type="pc2_transform.py" name="pc2_transform" output="screen" />
+
+    <!--   task manager, the clients for move base and line track -->
+    <node pkg="cashmerebot" type="task_manager_perception_only.py" name="task_manager_perception_only" output="screen" if="$(arg run_perception_only)"/>
+
+    <!--   path_plan server -->
+    <node pkg="cashmerebot" type="path_plan_server.py" name="path_plan_server" output="screen" />
+</launch>
