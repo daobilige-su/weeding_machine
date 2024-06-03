@@ -9,5 +9,5 @@
     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
 
     <!--     image_processor -->
-    <node pkg="weeding_machine" type="image_processor.py" name="image_processor" output="screen"/>
+<!--     <node pkg="weeding_machine" type="image_processor.py" name="image_processor" output="screen"/> -->
 </launch>

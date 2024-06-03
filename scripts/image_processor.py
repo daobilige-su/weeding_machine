@@ -4,6 +4,7 @@ import rospy
 import sys
 import tf
 from sensor_msgs.msg import PointCloud2, Image, CameraInfo
+from std_msgs.msg import Float32MultiArray
 import ros_numpy
 from transform_tools import *
 
@@ -22,6 +23,10 @@ class image_processor:
         self.pc2_sub = rospy.Subscriber("/front_rgb_cam/image_raw", Image, self.img_cb)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
         self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
+        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
+
+        # mid line track
+        self.mid_line_y = None
 
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/front_rgb_cam/camera_info", CameraInfo)
@@ -80,6 +85,8 @@ class image_processor:
         self.line_img_pub.publish(ros_image)
 
         # control weeder
+        self.control_weeder(lines)
+
 
         pass
 
@@ -104,7 +111,7 @@ class image_processor:
         lines_theta = lines2d[0:10, 1]
         theta = np.mean(lines_theta)
 
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, theta, np.deg2rad(1))
+        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, theta, theta+np.deg2rad(1))
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
         r_thr = 10
@@ -167,6 +174,23 @@ class image_processor:
         # plt.imshow(plant_seg, cmap='gray')
 
         return plant_seg
+
+    def control_weeder(self, lines):
+        lines_r = lines[0, :]
+        lines_y = -(lines_r-(280.0/2.0))*(1.0/20.0)
+
+        if self.mid_line_y is None:
+            idx = np.argmin(abs(lines_y - 0))
+            self.mid_line_y = lines_y[idx]
+        else:
+            idx = np.argmin(abs(lines_y - self.mid_line_y))
+            self.mid_line_y = lines_y[idx]
+
+        msg = Float32MultiArray()
+        msg.data = [self.mid_line_y]
+        self.weeder_control_pub.publish(msg)
+
+        pass
 
 
 def main(args):

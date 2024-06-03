@@ -3,33 +3,30 @@
 import rospy
 import sys
 import tf
+import serial  # https://pyserial.readthedocs.io/en/latest/shortintro.html
+from std_msgs.msg import Float32MultiArray
 
 
-class TFManager:
+class CmdSender:
     def __init__(self):
-        self.send_rate = rospy.Rate(10)  # send with 10 hz
-        self.br = tf.TransformBroadcaster()
+        self.ser = serial.Serial('/dev/ttyUSB0')
 
-    def tf_broadcast(self, trans, quat, child_frame, parent_frame):
-        self.br.sendTransform((trans[0], trans[1], trans[2]), (quat[0], quat[1], quat[2], quat[3]), rospy.Time.now(),
-                              child_frame, parent_frame)
+        self.weeder_cmd_sub = rospy.Subscriber('/weeder_cmd', Float32MultiArray, self.weeder_cmd_cb)
 
-    def send_tf(self):
-        self.tf_broadcast([1.060000, 0.000000, 1.200000], [-0.653282, 0.653282, -0.270598, 0.270598],
-                          'front_depth_cam', 'base_link')
-        self.tf_broadcast([0.000000, 0.000000, 0.000000], [0.000000, 0.000000, 0.000000, 1.0000008],
-                          'front_rgb_cam', 'front_depth_cam')
+    def __del__(self):
+        self.ser.close()
 
+    def weeder_cmd_cb(self, msg):
+        weeder_cmd = msg.data[0]
+
+        ser_msg = '0x02'
+        self.ser.write(ser_msg)
 
 def main(args):
-    rospy.init_node('tf_manager_node', anonymous=True)
-    tfm = TFManager()
-    try:
-        while not rospy.is_shutdown():
-            tfm.send_tf()
-            tfm.send_rate.sleep()
-    except KeyboardInterrupt:
-        print("Shutting down")
+    rospy.init_node('weeder_cmd_serial_comm_node', anonymous=True)
+    cmd_sender = CmdSender()
+
+    rospy.spin()
 
 
 if __name__ == '__main__':
