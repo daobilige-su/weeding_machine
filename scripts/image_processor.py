@@ -12,11 +12,25 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from skimage import filters
 
+import torch
+import rospkg
 
 class image_processor:
     def __init__(self):
+        rospack = rospkg.RosPack()
+        self.pkg_path = rospack.get_path('weeding_machine') + '/'
+        self.seg_type = 2
+
+        # yolo5 detection
+        self.det_x_thr = None
+        self.yolo5_model_path = None
+        self.model = None
+        if self.seg_type == 2:
+            self.yolo5_model_path = self.pkg_path + 'weights/best.pt'
+            self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
+            self.det_x_thr = 20
+
         self.tf_listener = tf.TransformListener()
 
         self.bridge = CvBridge()
@@ -27,6 +41,7 @@ class image_processor:
 
         # mid line track
         self.mid_line_y = None
+        self.control_bias = 3
 
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/front_rgb_cam/camera_info", CameraInfo)
@@ -60,13 +75,16 @@ class image_processor:
         except CvBridgeError as e:
             print(e)
 
-        # cv2.imshow('cv_image_wood_show', cv_image)
-        # cv2.waitKey(0)
+        # (1) segment plants in the image
+        if self.seg_type == 1:
+            np_image = np.asarray(cv_image, dtype=np.float64)  # BRG
+            plant_seg = self.segment_plants_exg(np_image)
+        elif self.seg_type == 2:
+            plant_seg = self.segment_plants_yolo5(cv_image)
+        else:
+            rospy.logwarn('unknown plant segmentation type. skipping')
+            return
 
-        np_image = np.asarray(cv_image, dtype=np.float64) # BRG
-
-        # segment plants in the image
-        plant_seg = self.segment_plants(np_image)
         plant_seg_pub = np.asarray((plant_seg * 255).astype(np.uint8))
 
         try:
@@ -75,8 +93,10 @@ class image_processor:
             print(e)
         self.seg_img_pub.publish(ros_image)
 
-        # detect lanes
+        # (2) detect lanes
         lines, plant_seg_lines = self.detect_lanes(plant_seg)
+        if lines is None:
+            return
 
         try:
             ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
@@ -84,11 +104,59 @@ class image_processor:
             print(e)
         self.line_img_pub.publish(ros_image)
 
-        # control weeder
+        # (3) control weeder
         self.control_weeder(lines)
 
 
         pass
+
+    def segment_plants_exg(self, np_image):
+        # mpl.__version__
+
+        # compute ExG index
+        exg_index = 2 * np_image[:, :, 1] - (np_image[:, :, 2] + np_image[:, :, 0])  # ExG = 2G-(R+B)
+        # debug
+        # plt.imshow(exg_index, cmap='gray')
+
+        # Otsu thresholding
+        # otsu_thr = filters.threshold_otsu(exg_index)
+        otsu_thr = 80
+        plant_seg = (exg_index > otsu_thr).astype(float)
+        # debug
+        # plt.imshow(plant_seg, cmap='gray')
+
+        return plant_seg
+
+    def segment_plants_yolo5(self, np_image):
+        image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
+
+        # detection
+        results = self.model(image_rgb)
+
+        # image_seg = image_rgb.copy()
+        image_seg_bn = np.zeros((image_rgb.shape[0],image_rgb.shape[1]))
+        # mpl.use('TkAgg')
+        # plt.imshow(image_seg, cmap='gray')
+        # plt.show()
+
+        # bbox coords, only select id=0, i.e. plants
+        bboxes = results.xyxy[0].cpu().numpy()
+        for bbox in bboxes:
+            x1, y1, x2, y2, conf, cls = bbox
+            if int(cls) == 0:  # only select id=0, i.e. plants
+                if y1>self.det_x_thr and y2>self.det_x_thr:
+                    # image_seg = cv2.rectangle(image_seg, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), -1)
+                    image_seg_bn = cv2.rectangle(image_seg_bn, (int(x1), int(y1)), (int(x2), int(y2)), 1, -1)
+
+        # mpl.use('TkAgg')
+        # plt.imshow(image_seg, cmap='gray')
+        # plt.show()
+        #
+        # mpl.use('TkAgg')
+        # plt.imshow(image_seg_bn, cmap='gray')
+        # plt.show()
+
+        return image_seg_bn
 
     def detect_lanes(self, plant_seg):
 
@@ -105,13 +173,32 @@ class image_processor:
 
 
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 50, None, 0, 0)
+        if lines is None:
+            rospy.logwarn('HoughLines: no lines are detected.')
+            return None, None
         lines2d = lines.reshape((lines.shape[0], lines.shape[2]))
         lines2d[lines2d[:, 0]<0, 1] = ((lines2d[lines2d[:, 0]<0, 1]+np.pi) + np.pi) % (2*np.pi) - np.pi # wrap to pi
         lines2d[lines2d[:, 0]<0, 0] = -lines2d[lines2d[:, 0]<0, 0]
         lines_theta = lines2d[0:10, 1]
+        if self.seg_type==2:
+            lines_r = lines2d[0:10, 0]
+            thetas = np.zeros((10,))
+            idx = 0
+            for i in range(lines_theta.shape[0]):
+                if bird_eye_view.shape[1]*0.4 < lines_r[i] < bird_eye_view.shape[1]*0.6:
+                    thetas[idx] = lines_theta[i]
+                    idx = idx+1
+            lines_theta = thetas[0:idx]
+            if idx == 0:
+                rospy.logwarn('detect_lanes: not enough middle lines detected.')
+                return None, None
+
         theta = np.mean(lines_theta)
 
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, theta, theta+np.deg2rad(1))
+        if lines is None:
+            rospy.logwarn('HoughLines: no lines are detected.')
+            return None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
         r_thr = 10
@@ -158,25 +245,8 @@ class image_processor:
 
         return lines_r_sel, bird_eye_view_lines
 
-    def segment_plants(self, np_image):
-        # mpl.__version__
-
-        # compute ExG index
-        exg_index = 2 * np_image[:, :, 1] - (np_image[:, :, 2] + np_image[:, :, 0])  # ExG = 2G-(R+B)
-        # debug
-        # plt.imshow(exg_index, cmap='gray')
-
-        # Otsu thresholding
-        # otsu_thr = filters.threshold_otsu(exg_index)
-        otsu_thr = 80
-        plant_seg = (exg_index > otsu_thr).astype(float)
-        # debug
-        # plt.imshow(plant_seg, cmap='gray')
-
-        return plant_seg
-
     def control_weeder(self, lines):
-        lines_r = lines[0, :]
+        lines_r = lines[0, :]+self.control_bias
         lines_y = -(lines_r-(280.0/2.0))*(1.0/20.0)
 
         if self.mid_line_y is None:

@@ -10,4 +10,7 @@
 
     <!--     image_processor -->
     <node pkg="weeding_machine" type="image_processor.py" name="image_processor" output="screen"/>
+
+    <!--     weeder_cmd_serial_comm -->
+    <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/>
 </launch>
