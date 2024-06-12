@@ -90,6 +90,17 @@ def ypr2quat(ypr):
     return quat_np #(x,y,z,w)
 
 
+def ypr_to_matrix(ypr):
+    ypr = ypr.reshape((-1,1))
+    # R.from_euler('ZYX', [y,p,r],degrees=true), 'ZYX' means extrinsic, 'zyx' means intrinsic, we use extrinsic,
+    # it basically means World to Object or Object to World
+    r = R.from_euler('ZYX', [ypr[0,0]*(180.0/math.pi),ypr[1,0]*(180.0/math.pi),ypr[2,0]*(180.0/math.pi)], degrees=True)
+    # r_M = r.as_dcm()
+    r_M = r.as_matrix()
+
+    return r_M
+
+
 def wrap_to_pi(rad):
     rad = rad % (math.pi*2.0)
     if rad<=(-1.0)*math.pi:

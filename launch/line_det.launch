@@ -1,0 +1,14 @@
+<launch>
+    <!--   task manager, the clients for move base and line track -->
+<!--     <node pkg="weeding_machine" type="task_manager.py" name="task_manager" output="screen"/> -->
+
+    <!--   rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/main.rviz"/>
+
+    <!--     tf_manager -->
+    <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
+
+    <!--     image_processor -->
+<!--     <node pkg="weeding_machine" type="line_detect.py" name="line_detect" output="screen"/> -->
+
+</launch>

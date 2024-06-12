@@ -13,20 +13,14 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from skimage import filters
+from mpl_toolkits import mplot3d
+
+from scipy import stats
 
 
 class line_detector:
     def __init__(self):
         self.tf_listener = tf.TransformListener()
-
-        self.bridge = CvBridge()
-        self.pc2_sub = rospy.Subscriber("/front_rgb_cam/image_raw", Image, self.img_cb)
-        self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
-        self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
-        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
-
-        # mid line track
-        self.mid_line_y = None
 
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/front_rgb_cam/camera_info", CameraInfo)
@@ -37,9 +31,10 @@ class line_detector:
         for i in range(10):
             try:
                 (trans, rot) = self.tf_listener.lookupTransform('/base_link', '/front_rgb_cam', rospy.Time(0))
-                # M = transform_trans_quat_to_matrix(np.array([[trans[0]], [trans[1]], [trans[2]], [rot[0]], [rot[1]], [rot[2]], [rot[3]]]))
-                M = transform_trans_ypr_to_matrix(np.array([[0, 0, 0, 0, 0, -np.pi/4.0]]))
-                self.cam_T = M[0:3, :]
+                M = transform_trans_quat_to_matrix(
+                    np.array([[trans[0]], [trans[1]], [trans[2]], [rot[0]], [rot[1]], [rot[2]], [rot[3]]]))
+                # M = transform_trans_ypr_to_matrix(np.array([[0, 0, 0, 0, 0, -np.pi/4.0]]))
+                self.cam_T = M
                 break
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 rospy.logwarn('image_processor: tf lookup failed')
@@ -48,8 +43,15 @@ class line_detector:
                 else:
                     rospy.sleep(1.0)
 
-        # camera homography
-        self.cam_H = self.cam_K @ self.cam_T
+        self.bridge = CvBridge()
+        self.img_sub = rospy.Subscriber("/front_rgb_cam/image_raw", Image, self.img_cb)
+        self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
+        self.pc2_pub = rospy.Publisher('/seg_pc', PointCloud2, queue_size=5)
+
+        self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
+
+        # mid line track
+        self.mid_line_y = None
 
         pass
 
@@ -75,85 +77,138 @@ class line_detector:
             print(e)
         self.seg_img_pub.publish(ros_image)
 
-        # detect lanes
-        lines, plant_seg_lines = self.detect_lanes(plant_seg)
+        # plant_seg to pc
+        pc = self.img_to_pc(plant_seg)
 
-        try:
-            ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
-        except CvBridgeError as e:
-            print(e)
-        self.line_img_pub.publish(ros_image)
+        pc2_msg = self.numpy_to_pc2_msg(pc, msg.header)
+        self.pc2_pub.publish(pc2_msg)
+
+        # pc to lines
+        self.extract_lines(pc)
+
+        # try:
+        #     ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
+        # except CvBridgeError as e:
+        #     print(e)
+        # self.line_img_pub.publish(ros_image)
 
 
         pass
 
-    def detect_lanes(self, plant_seg):
+    def extract_lines(self, pc, theta_reso=1.0, theta_pre=None, theta_range=None):
 
-        plant_seg = np.asarray((plant_seg*255).astype(np.uint8))
-        # plant_seg_cv = cv2.
+        ct = np.array([np.mean(pc[0, :]), np.mean(pc[1, :])])
+        pc_ct = np.block([[pc[0, :] - ct[0]], [pc[1, :] - ct[1]], [pc[2, :]]])
 
-        outputpts = np.float32([[0, 0], [280-1, 0], [160-1, 180-1], [120-1, 180-1]])
-        inputpts = np.float32([[0, 0], [320 - 1, 0], [320 - 1, 240 - 1], [0, 240 - 1]])
+        pc_ct_Y_range = np.array([np.min(pc_ct[1, :]), np.max(pc_ct[1, :])])
 
-        m = cv2.getPerspectiveTransform(inputpts, outputpts)
-        bird_eye_view = cv2.warpPerspective(plant_seg, m, (280, 180), flags=cv2.INTER_NEAREST)
+        if theta_pre is None:
+            hist_std = np.arange(-45.0, 45.0+theta_reso, theta_reso)*0.0
+            idx = 0
+            for theta_deg in np.arange(-45.0, 45.0+theta_reso, theta_reso):
+                theta = np.deg2rad(theta_deg)
+                R = ypr_to_matrix(np.array([theta, 0, 0]))
+                pc_theta = R @ pc_ct
 
-        # plt.imshow(bird_eye_view, cmap='gray')
+                Y = pc_theta[1, :]
+
+                hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
+                # plt.hist(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
+
+                std = np.std(hist[0])
+                hist_std[idx] = std
+
+                idx = idx+1
+
+            # plt.plot(hist_std)
+
+            theta_opt = np.rad2deg(np.arange(-45.0, 45.0+theta_reso, theta_reso)[np.argmax(hist_std)])
+            R = ypr_to_matrix(np.array([theta_opt, 0, 0]))
+            pc_theta = R @ pc_ct
+            Y = pc_theta[1, :]
+            # hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1] + 0.05, 0.05), density=True)
+            Y_kde = stats.gaussian_kde(Y, bw_method=None)
+
+            pc_theta_Y_range = np.array([np.min(pc_theta[1, :]), np.max(pc_theta[1, :])])
+            Y_kde_sam_idx = np.arange(pc_theta_Y_range[0], pc_theta_Y_range[1], 0.01)
+            Y_kde_sam = Y_kde(Y_kde_sam_idx)
+
+            plt.plot(Y_kde_sam_idx, Y_kde_sam)
 
 
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 50, None, 0, 0)
-        lines2d = lines.reshape((lines.shape[0], lines.shape[2]))
-        lines2d[lines2d[:, 0]<0, 1] = ((lines2d[lines2d[:, 0]<0, 1]+np.pi) + np.pi) % (2*np.pi) - np.pi # wrap to pi
-        lines2d[lines2d[:, 0]<0, 0] = -lines2d[lines2d[:, 0]<0, 0]
-        lines_theta = lines2d[0:10, 1]
-        theta = np.mean(lines_theta)
 
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, theta, theta+np.deg2rad(1))
-        lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
-        r_thr = 10
-        lines_r_asc = np.sort(lines_r)
 
-        lines_r_sel = np.zeros((2, lines_r_asc.shape[0]))
-        lines_r_sel[1, :] = theta
 
-        idx = 0
-        n = 0
-        for i in range(lines_r_asc.shape[0]):
-            r = lines_r_asc[i]
-            if i==0:
-                lines_r_sel[0, idx] = r
-                n = 1
-            else:
-                if abs(r-lines_r_asc[i-1])<r_thr:
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx]+r
-                    n = n+1
-                else:
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx]/n
 
-                    idx = idx+1
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx]+r
-                    n=1
-        lines_r_sel[0, idx] = lines_r_sel[0, idx] / n
-        lines_r_sel = lines_r_sel[:, 0:idx+1]
 
-        bird_eye_view_lines = np.stack((bird_eye_view,)*3, axis=-1)
 
-        if lines_r_sel is not None:
-            for i in range(lines_r_sel.shape[1]):
-                rho = lines_r_sel[0, i]
-                theta = lines_r_sel[1, i]
-                a = math.cos(theta)
-                b = math.sin(theta)
-                x0 = a * rho
-                y0 = b * rho
-                pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
-                pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-                cv2.line(bird_eye_view_lines, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
 
-        # plt.imshow(bird_eye_view_lines, cmap='gray')
 
-        return lines_r_sel, bird_eye_view_lines
+
+
+        pass
+
+    def img_to_pc(self, plant_seg):
+
+        # if self.cam_T is None:
+        #     rospy.logwarn('line_detect: self.cam_T is not ready yet.')
+        #     return None
+
+        img_size = np.array([plant_seg.shape[0], plant_seg.shape[1]])
+
+        u = np.tile(np.array([range(img_size[1])]), (img_size[0], 1))
+        v = np.tile(np.array([range(img_size[0])]).T, (1, img_size[1]))
+
+        u_flat = u.reshape((-1,))
+        v_flat = v.reshape((-1,))
+
+        plant_seg_flat = plant_seg.reshape((-1,))
+        plant_seg_u = u_flat[plant_seg_flat > 0]
+        plant_seg_v = v_flat[plant_seg_flat > 0]
+
+        uv = np.block([[plant_seg_u], [plant_seg_v]])
+
+        # K = np.array([159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0])
+        # K = np.array([159.99999300617776, 0.0, 160.00, 0.0, 159.99999300617776, 120.00, 0.0, 0.0, 1.0]).reshape((3, 3))
+        K = self.cam_K
+
+        # Rt_mc = transform_trans_ypr_to_matrix(np.array([0, 0, 1.2, np.deg2rad(-90), 0, np.deg2rad(-90 - 45)]))
+        Rt_mc = self.cam_T
+        Rt_cm = np.linalg.pinv(Rt_mc)
+
+
+        KRt = K @ Rt_cm[0:3, 0:4]  # 3x4
+
+        k11 = KRt[0, 0]
+        k12 = KRt[0, 1]
+        k13 = KRt[0, 2]
+        k14 = KRt[0, 3]
+        k21 = KRt[1, 0]
+        k22 = KRt[1, 1]
+        k23 = KRt[1, 2]
+        k24 = KRt[1, 3]
+        k31 = KRt[2, 0]
+        k32 = KRt[2, 1]
+        k33 = KRt[2, 2]
+        k34 = KRt[2, 3]
+
+        XY = np.divide(np.array([[k22 * k34 - k24 * k32, k14 * k32 - k12 * k34, k12 * k24 - k14 * k22],
+                                 [k24 * k31 - k21 * k34, k11 * k34 - k14 * k31, k14 * k21 - k11 * k24]]) \
+                       @ np.block([[uv], [np.ones((1, uv.shape[1]))]]), \
+                       np.array([[k21 * k32 - k22 * k31, k12 * k31 - k11 * k32, k11 * k22 - k12 * k21],
+                                 [k21 * k32 - k22 * k31, k12 * k31 - k11 * k32, k11 * k22 - k12 * k21]]) \
+                       @ np.block([[uv], [np.ones((1, uv.shape[1]))]]))
+        Z = np.zeros((1, uv.shape[1]))
+
+        P = np.block([[XY], [Z]])
+
+        # fig = plt.figure()
+        # ax = plt.axes(projection='3d')
+        # ax.scatter3D(P[0, :], P[1, :], P[2, :])
+        # plt.show()
+
+        return P
 
     def segment_plants(self, np_image):
         # mpl.__version__
@@ -172,6 +227,22 @@ class line_detector:
 
         return plant_seg
 
+    def numpy_to_pc2_msg(self, np_pc, header):
+
+        pc_array = np.zeros(np_pc.shape[1], dtype=[
+            ('x', np.float32),
+            ('y', np.float32),
+            ('z', np.float32)
+        ])
+
+        pc_array['x'] = np_pc[0, :]
+        pc_array['y'] = np_pc[1, :]
+        pc_array['z'] = np_pc[2, :]
+
+        pc2_msg = ros_numpy.point_cloud2.array_to_pointcloud2(pc_array, header.stamp, 'base_link')
+        pc2_msg.header.seq = header.seq
+
+        return pc2_msg
 
 def main(args):
     rospy.init_node('line_detect_node', anonymous=True)
