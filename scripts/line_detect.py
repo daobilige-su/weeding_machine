@@ -12,7 +12,7 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from skimage import filters
+# from skimage import filters
 from mpl_toolkits import mplot3d
 
 from scipy import stats
@@ -85,7 +85,9 @@ class line_detector:
         self.pc2_pub.publish(pc2_msg)
 
         # pc to lines
-        self.extract_lines(pc)
+        lines = self.extract_lines(pc)
+
+        mk_msg = self.show_lines(lines, msg.header)
 
         # try:
         #     ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
@@ -130,7 +132,7 @@ class line_detector:
 
         # plt.plot(hist_std)
 
-        theta_opt = np.rad2deg(np.arange(theta_pre+theta_range[0], theta_pre+theta_range[1]+theta_reso, theta_reso)[np.argmax(hist_std)])
+        theta_opt = np.deg2rad(np.arange(theta_pre+theta_range[0], theta_pre+theta_range[1]+theta_reso, theta_reso)[np.argmax(hist_std)])
         R = ypr_to_matrix(np.array([theta_opt, 0, 0]))
         pc_theta = R @ pc
         Y = pc_theta[1, :]
@@ -154,20 +156,14 @@ class line_detector:
 
         plt.plot(peaks_Y, peaks_h, 'k^')
 
-        return np.block([[theta_opt], [r_opt]])
+        thetas = np.ones((1, r_opt.shape[0]))*theta_opt*(-1.0)
+
+        line_edges = np.block([[np.ones((1, r_opt.shape[0]))*0.0], [np.ones((1, r_opt.shape[0]))*10.0]])
+
+        return np.block([[thetas], [r_opt], [line_edges]])
 
 
 
-
-
-
-
-
-
-
-
-
-        pass
 
     def img_to_pc(self, plant_seg):
 
@@ -263,6 +259,16 @@ class line_detector:
         pc2_msg.header.seq = header.seq
 
         return pc2_msg
+
+    def show_lines(self, lines, msg_header):
+
+        line_num = lines.shape[1]
+        line_pts = np.zeros((6, line_num))
+        for i in range(line_num):
+            pts = transform_trans_ypr_to_matrix(np.array([0, 0, 0, lines[0, i]])) @ np.array([[lines[2, i], lines[3, i]], [lines[1, i], lines[1, i]], [0, 0], [1, 1]])
+            line_pts[i, :] = np.block([[pts[0:3, 0]], [pts[0:3, 1]]]).reshape((-1,))
+
+        pass
 
 def main(args):
     rospy.init_node('line_detect_node', anonymous=True)
