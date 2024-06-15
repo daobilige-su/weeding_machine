@@ -16,6 +16,7 @@ from skimage import filters
 from mpl_toolkits import mplot3d
 
 from scipy import stats
+from scipy import signal
 
 
 class line_detector:
@@ -103,38 +104,57 @@ class line_detector:
         pc_ct_Y_range = np.array([np.min(pc_ct[1, :]), np.max(pc_ct[1, :])])
 
         if theta_pre is None:
-            hist_std = np.arange(-45.0, 45.0+theta_reso, theta_reso)*0.0
-            idx = 0
-            for theta_deg in np.arange(-45.0, 45.0+theta_reso, theta_reso):
-                theta = np.deg2rad(theta_deg)
-                R = ypr_to_matrix(np.array([theta, 0, 0]))
-                pc_theta = R @ pc_ct
+            theta_pre = 0
+            theta_range = np.array([-45.0, 45.0])
+        else:
+            if theta_range is None:
+                rospy.logwarn('line_detect: theta_pre is provide, but theta_range is None.')
+                return None
 
-                Y = pc_theta[1, :]
-
-                hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
-                # plt.hist(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
-
-                std = np.std(hist[0])
-                hist_std[idx] = std
-
-                idx = idx+1
-
-            # plt.plot(hist_std)
-
-            theta_opt = np.rad2deg(np.arange(-45.0, 45.0+theta_reso, theta_reso)[np.argmax(hist_std)])
-            R = ypr_to_matrix(np.array([theta_opt, 0, 0]))
+        hist_std = np.arange(theta_pre+theta_range[0], theta_pre+theta_range[1]+theta_reso, theta_reso)*0.0
+        idx = 0
+        for theta_deg in np.arange(theta_pre+theta_range[0], theta_pre+theta_range[1]+theta_reso, theta_reso):
+            theta = np.deg2rad(theta_deg)
+            R = ypr_to_matrix(np.array([theta, 0, 0]))
             pc_theta = R @ pc_ct
+
             Y = pc_theta[1, :]
-            # hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1] + 0.05, 0.05), density=True)
-            Y_kde = stats.gaussian_kde(Y, bw_method=None)
 
-            pc_theta_Y_range = np.array([np.min(pc_theta[1, :]), np.max(pc_theta[1, :])])
-            Y_kde_sam_idx = np.arange(pc_theta_Y_range[0], pc_theta_Y_range[1], 0.01)
-            Y_kde_sam = Y_kde(Y_kde_sam_idx)
+            hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
+            # plt.hist(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1]+0.05, 0.05), density=True)
 
-            plt.plot(Y_kde_sam_idx, Y_kde_sam)
+            std = np.std(hist[0])
+            hist_std[idx] = std
 
+            idx = idx+1
+
+        # plt.plot(hist_std)
+
+        theta_opt = np.rad2deg(np.arange(theta_pre+theta_range[0], theta_pre+theta_range[1]+theta_reso, theta_reso)[np.argmax(hist_std)])
+        R = ypr_to_matrix(np.array([theta_opt, 0, 0]))
+        pc_theta = R @ pc
+        Y = pc_theta[1, :]
+        # hist = np.histogram(Y, np.arange(pc_ct_Y_range[0], pc_ct_Y_range[1] + 0.05, 0.05), density=True)
+        Y_kde = stats.gaussian_kde(Y, bw_method=None)
+
+        pc_theta_Y_range = np.array([np.min(Y), np.max(Y)])
+        Y_kde_sam_idx = np.arange(pc_theta_Y_range[0], pc_theta_Y_range[1], 0.01)
+        Y_kde_sam = Y_kde(Y_kde_sam_idx)
+
+        plt.plot(Y_kde_sam_idx, Y_kde_sam)
+
+        min_dist = 0.3
+        min_samples = min_dist/0.01
+        peaks = signal.find_peaks(Y_kde_sam, distance=min_samples)
+        peaks_idx = peaks[0]
+        peaks_h = Y_kde_sam[peaks_idx]
+        peaks_Y = Y_kde_sam_idx[peaks_idx]
+
+        r_opt = peaks_Y
+
+        plt.plot(peaks_Y, peaks_h, 'k^')
+
+        return np.block([[theta_opt], [r_opt]])
 
 
 
