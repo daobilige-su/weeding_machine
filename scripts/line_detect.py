@@ -7,6 +7,7 @@ from sensor_msgs.msg import PointCloud2, Image, CameraInfo
 from std_msgs.msg import Float32MultiArray
 import ros_numpy
 from transform_tools import *
+from visualization_msgs.msg import MarkerArray
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -17,6 +18,8 @@ from mpl_toolkits import mplot3d
 
 from scipy import stats
 from scipy import signal
+
+from plot_marker import *
 
 
 class line_detector:
@@ -50,6 +53,7 @@ class line_detector:
         self.pc2_pub = rospy.Publisher('/seg_pc', PointCloud2, queue_size=5)
 
         self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
+        self.line_marker_pub = rospy.Publisher('/line_marker', MarkerArray, queue_size=2)
 
         # mid line track
         self.mid_line_y = None
@@ -88,6 +92,7 @@ class line_detector:
         lines = self.extract_lines(pc)
 
         mk_msg = self.show_lines(lines, msg.header)
+        self.line_marker_pub.publish(mk_msg)
 
         # try:
         #     ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
@@ -265,10 +270,12 @@ class line_detector:
         line_num = lines.shape[1]
         line_pts = np.zeros((6, line_num))
         for i in range(line_num):
-            pts = transform_trans_ypr_to_matrix(np.array([0, 0, 0, lines[0, i]])) @ np.array([[lines[2, i], lines[3, i]], [lines[1, i], lines[1, i]], [0, 0], [1, 1]])
-            line_pts[i, :] = np.block([[pts[0:3, 0]], [pts[0:3, 1]]]).reshape((-1,))
+            pts = transform_trans_ypr_to_matrix(np.array([0, 0, 0, lines[0, i], 0, 0])) @ np.array([[lines[2, i], lines[3, i]], [lines[1, i], lines[1, i]], [0, 0], [1, 1]])
+            line_pts[:, i] = np.block([[pts[0:3, 0]], [pts[0:3, 1]]]).reshape((-1,))
 
-        pass
+        marker_array = plot_farm_lines(line_pts, 1, frame_id='base_link')
+
+        return marker_array
 
 def main(args):
     rospy.init_node('line_detect_node', anonymous=True)

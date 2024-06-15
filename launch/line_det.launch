@@ -9,6 +9,6 @@
     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
 
     <!--     image_processor -->
-<!--     <node pkg="weeding_machine" type="line_detect.py" name="line_detect" output="screen"/> -->
+    <node pkg="weeding_machine" type="line_detect.py" name="line_detect" output="screen"/>
 
 </launch>

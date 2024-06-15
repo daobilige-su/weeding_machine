@@ -111,7 +111,7 @@ def plot_traj(traj_pts, marker_pub, start_id, frame_id='map', scale_size=0.01): 
     marker_pub.publish(marker_array)
 
 
-def plot_lines(lines, start_id, frame_id='base_link', scale_size=0.01):  # traj_pts: Nx3
+def plot_farm_lines(lines, id, frame_id='base_link', scale_size=0.01):  # traj_pts: Nx3
     marker_array = MarkerArray()
     marker_array.markers = []
 
@@ -119,7 +119,7 @@ def plot_lines(lines, start_id, frame_id='base_link', scale_size=0.01):  # traj_
     pt_marker = Marker()
     pt_marker.header.frame_id = frame_id
     pt_marker.ns = "line_detect_" + "line_pts"
-    pt_marker.id = start_id
+    pt_marker.id = id
     pt_marker.type = Marker.CUBE_LIST
     pt_marker.action = Marker.ADD
     pose = Pose()
@@ -132,12 +132,18 @@ def plot_lines(lines, start_id, frame_id='base_link', scale_size=0.01):  # traj_
 
     pt_marker.points = []
     # pt_marker.colors = []
-    traj_pts_num = traj_pts.shape[0]
-    for i in range(traj_pts_num):
+    line_num = lines.shape[1]
+    for i in range(line_num):
         pt = Point()
-        pt.x = traj_pts[i, 0]
-        pt.y = traj_pts[i, 1]
-        pt.z = traj_pts[i, 2]
+        pt.x = lines[0, i]
+        pt.y = lines[1, i]
+        pt.z = lines[2, i]
+        pt_marker.points.append(pt)
+
+        pt = Point()
+        pt.x = lines[3, i]
+        pt.y = lines[4, i]
+        pt.z = lines[5, i]
         pt_marker.points.append(pt)
 
         # color = ColorRGBA()
@@ -147,12 +153,12 @@ def plot_lines(lines, start_id, frame_id='base_link', scale_size=0.01):  # traj_
 
     marker_array.markers.append(pt_marker)
 
-    # traj line
+    # line
     line_marker = Marker()
     line_marker.header.frame_id = frame_id
-    line_marker.ns = "path_plan_" + "traj_line"
-    line_marker.id = start_id+1
-    line_marker.type = Marker.LINE_STRIP
+    line_marker.ns = "line_detect_" + "line"
+    line_marker.id = id+1
+    line_marker.type = Marker.LINE_LIST  # draw a line between each pair of points, so 0-1, 2-3, 4-5, ...
     line_marker.action = Marker.ADD
     pose = Pose()
     pose.orientation.w = 1
@@ -162,17 +168,22 @@ def plot_lines(lines, start_id, frame_id='base_link', scale_size=0.01):  # traj_
     line_marker.scale.x, line_marker.scale.y, line_marker.scale.z = (scale_size, scale_size, scale_size)
 
     line_marker.points = []
-    for i in range(traj_pts_num):
+    for i in range(line_num):
         pt = Point()
-        pt.x = traj_pts[i, 0]
-        pt.y = traj_pts[i, 1]
-        pt.z = traj_pts[i, 2]
+        pt.x = lines[0, i]
+        pt.y = lines[1, i]
+        pt.z = lines[2, i]
+        line_marker.points.append(pt)
+
+        pt = Point()
+        pt.x = lines[3, i]
+        pt.y = lines[4, i]
+        pt.z = lines[5, i]
         line_marker.points.append(pt)
 
     marker_array.markers.append(line_marker)
 
-    # publish marker_array
-    marker_pub.publish(marker_array)
+    return marker_array
 
 
 def plot_arrows(poses, marker_pub, start_id, frame_id='map', scale_size=0.01):  # poses: Nx6
