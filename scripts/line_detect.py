@@ -13,7 +13,6 @@ import cv2
 from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-# from skimage import filters
 from mpl_toolkits import mplot3d
 
 from scipy import stats
