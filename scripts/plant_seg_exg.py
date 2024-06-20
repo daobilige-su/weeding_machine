@@ -26,14 +26,14 @@ class line_detector:
         self.tf_listener = tf.TransformListener()
 
         # get camera intrinsic
-        cam_info = rospy.wait_for_message("/front_rgb_cam/camera_info", CameraInfo)
+        cam_info = rospy.wait_for_message("/left_rgb_cam/camera_info", CameraInfo)
         self.cam_K = np.array(cam_info.K).reshape((3, 3))
 
         # get camera extrinsic
         self.cam_T = None
         for i in range(10):
             try:
-                (trans, rot) = self.tf_listener.lookupTransform('/base_link', '/front_rgb_cam', rospy.Time(0))
+                (trans, rot) = self.tf_listener.lookupTransform('/base_link', '/left_rgb_cam', rospy.Time(0))
                 M = transform_trans_quat_to_matrix(
                     np.array([[trans[0]], [trans[1]], [trans[2]], [rot[0]], [rot[1]], [rot[2]], [rot[3]]]))
                 # M = transform_trans_ypr_to_matrix(np.array([[0, 0, 0, 0, 0, -np.pi/4.0]]))
@@ -47,7 +47,7 @@ class line_detector:
                     rospy.sleep(1.0)
 
         self.bridge = CvBridge()
-        self.img_sub = rospy.Subscriber("/front_rgb_cam/image_raw", Image, self.img_cb)
+        self.img_sub = rospy.Subscriber("/left_rgb_cam/image_raw", Image, self.img_cb)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
         self.pc2_pub = rospy.Publisher('/seg_pc', PointCloud2, queue_size=5)
 
