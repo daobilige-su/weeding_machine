@@ -15,10 +15,18 @@ class TFManager:
                               child_frame, parent_frame)
 
     def send_tf(self):
-        self.tf_broadcast([1.060000, 0.000000, 1.200000], [-0.653282, 0.653282, -0.270598, 0.270598],
-                          'front_depth_cam', 'base_link')
-        self.tf_broadcast([0.000000, 0.000000, 0.000000], [0.000000, 0.000000, 0.000000, 1.0000008],
-                          'front_rgb_cam', 'front_depth_cam')
+        self.tf_broadcast([0.000002, 2.500001, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
+                          'left_weeder', 'base_link')
+        self.tf_broadcast([0.000002, -2.500001, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
+                          'right_weeder', 'base_link')
+        self.tf_broadcast([2.320000, 0.000000, 1.300000], [-0.653281, 0.653281, -0.270598, 0.270598],
+                          'left_rgb_cam', 'left_weeder')
+        self.tf_broadcast([2.320002, 0.000001, 1.300000], [-0.653282, 0.653282, -0.270598, 0.270598],
+                          'right_rgb_cam', 'right_weeder')
+        self.tf_broadcast([0.000000, 0.000000, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
+                          'left_depth_cam', 'left_rgb_cam')
+        self.tf_broadcast([0.000000, 0.000000, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
+                          'right_depth_cam', 'right_rgb_cam')
 
 
 def main(args):

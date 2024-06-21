@@ -20,7 +20,7 @@ class image_processor:
     def __init__(self):
         rospack = rospkg.RosPack()
         self.pkg_path = rospack.get_path('weeding_machine') + '/'
-        self.seg_type = 2
+        self.seg_type = 1
 
         # yolo5 detection
         self.det_x_thr = None
@@ -42,7 +42,11 @@ class image_processor:
 
         # mid line track
         self.mid_line_y = None
-        self.control_bias = 3
+        self.control_bias = 0
+        self.max_line_width = 1.0
+        self.weeder_y = 0
+        self.mid_y_buff = np.zeros((35,))
+        self.ctl_time_pre = -1
 
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/left_rgb_cam/camera_info", CameraInfo)
@@ -161,19 +165,27 @@ class image_processor:
 
     def detect_lanes(self, plant_seg):
 
-        plant_seg = np.asarray((plant_seg*255).astype(np.uint8))
+        detect_roi = [0.0, 1.0, 0.2, 1.0] # u_min, u_max, v_min, v_max
+        plant_seg_roi = plant_seg.copy()
+        plant_seg_roi[:, :int(detect_roi[0]*plant_seg_roi.shape[1])] = 0
+        plant_seg_roi[:, int(detect_roi[1]*plant_seg_roi.shape[1]):] = 0
+        plant_seg_roi[:int(detect_roi[2] * plant_seg_roi.shape[0]), :] = 0
+        plant_seg_roi[int(detect_roi[3] * plant_seg_roi.shape[0]):, :] = 0
+        plt.imshow(plant_seg_roi, cmap='gray')
+
+        plant_seg_rgb = np.asarray((plant_seg_roi * 255).astype(np.uint8))
         # plant_seg_cv = cv2.
 
         outputpts = np.float32([[0, 0], [280-1, 0], [160-1, 180-1], [120-1, 180-1]])
         inputpts = np.float32([[0, 0], [320 - 1, 0], [320 - 1, 240 - 1], [0, 240 - 1]])
 
         m = cv2.getPerspectiveTransform(inputpts, outputpts)
-        bird_eye_view = cv2.warpPerspective(plant_seg, m, (280, 180), flags=cv2.INTER_NEAREST)
+        bird_eye_view = cv2.warpPerspective(plant_seg_rgb, m, (280, 180), flags=cv2.INTER_NEAREST)
 
         # plt.imshow(bird_eye_view, cmap='gray')
 
 
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 50, None, 0, 0)
+        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, np.deg2rad(-20), np.deg2rad(20))
         if lines is None:
             rospy.logwarn('HoughLines: no lines are detected.')
             return None, None
@@ -230,7 +242,9 @@ class image_processor:
 
         bird_eye_view_lines = np.stack((bird_eye_view,)*3, axis=-1)
 
+        lines_x_theta = None
         if lines_r_sel is not None:
+            lines_x_theta = lines_r_sel.copy()
             for i in range(lines_r_sel.shape[1]):
                 rho = lines_r_sel[0, i]
                 theta = lines_r_sel[1, i]
@@ -242,24 +256,56 @@ class image_processor:
                 pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
                 cv2.line(bird_eye_view_lines, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
 
+                pt_edge_x = (rho-bird_eye_view.shape[0]*b)/a
+                lines_x_theta[0, i] = pt_edge_x
+                cv2.circle(bird_eye_view_lines, (int(bird_eye_view.shape[1]/2.0), bird_eye_view.shape[0]), 5, (255, 0, 0), 1)
+                cv2.circle(bird_eye_view_lines, (int(pt_edge_x), bird_eye_view.shape[0]), 5, (0, 0, 255), 1)
+
         # plt.imshow(bird_eye_view_lines, cmap='gray')
 
-        return lines_r_sel, bird_eye_view_lines
+        return lines_x_theta, bird_eye_view_lines
 
     def control_weeder(self, lines):
         lines_r = lines[0, :]+self.control_bias
         lines_y = -(lines_r-(280.0/2.0))*(1.0/20.0)
 
-        if self.mid_line_y is None:
-            idx = np.argmin(abs(lines_y - 0))
-            self.mid_line_y = lines_y[idx]
-        else:
-            idx = np.argmin(abs(lines_y - self.mid_line_y))
-            self.mid_line_y = lines_y[idx]
+        # if self.mid_line_y is None:
+        #     idx = np.argmin(abs(lines_y - 0))
+        #     self.mid_line_y = lines_y[idx]
+        # else:
+        #     idx = np.argmin(abs(lines_y - self.mid_line_y))
+        #     self.mid_line_y = lines_y[idx]
+        pos_idx = np.argmin(abs(lines_y[lines_y > 0] - 0))
+        pos_y = (lines_y[lines_y > 0])[pos_idx]
+        neg_idx = np.argmin(abs(lines_y[lines_y < 0] - 0))
+        neg_y = (lines_y[lines_y < 0])[neg_idx]
 
-        msg = Float32MultiArray()
-        msg.data = [self.mid_line_y]
-        self.weeder_control_pub.publish(msg)
+        mid_y = 0
+        if pos_y<self.max_line_width and neg_y>-self.max_line_width:
+            mid_y = (pos_y+neg_y)/2.0
+
+        speed = 0.2*0.8
+        cur_time = rospy.get_time()
+        if (cur_time-self.ctl_time_pre)*speed>0.1:
+            self.mid_y_buff[0:self.mid_y_buff.shape[0]-1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()
+            self.mid_y_buff[self.mid_y_buff.shape[0]-1] = mid_y
+            print(self.mid_y_buff)
+            self.ctl_time_pre = cur_time
+
+            # ctl_cmd = 0
+            # if self.mid_y_buff[0] > 0.10*self.max_line_width:
+            #     ctl_cmd = -0.05
+            # elif self.mid_y_buff[0] < -0.25*self.max_line_width:
+            #     ctl_cmd = 0.05
+
+            # self.weeder_y = self.weeder_y+ctl_cmd
+            self.weeder_y = self.mid_y_buff[-1]
+
+            msg = Float32MultiArray()
+            msg.data = [self.weeder_y]
+            self.weeder_control_pub.publish(msg)
+        else:
+            return
 
         pass
 
