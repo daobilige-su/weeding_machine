@@ -47,6 +47,7 @@ class image_processor:
         self.weeder_y = 0
         self.mid_y_buff = np.zeros((35,))
         self.ctl_time_pre = -1
+        self.ctl_cmd = 0
 
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/left_rgb_cam/camera_info", CameraInfo)
@@ -214,7 +215,7 @@ class image_processor:
             return None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
-        r_thr = 10
+        r_thr = 5
         lines_r_asc = np.sort(lines_r)
 
         lines_r_sel = np.zeros((2, lines_r_asc.shape[0]))
@@ -267,7 +268,7 @@ class image_processor:
 
     def control_weeder(self, lines):
         lines_r = lines[0, :]+self.control_bias
-        lines_y = -(lines_r-(280.0/2.0))*(1.0/20.0)
+        lines_y = -(lines_r-(280.0/2.0))*(0.5/20.0)
 
         # if self.mid_line_y is None:
         #     idx = np.argmin(abs(lines_y - 0))
@@ -301,8 +302,13 @@ class image_processor:
             # self.weeder_y = self.weeder_y+ctl_cmd
             self.weeder_y = self.mid_y_buff[-1]
 
+            if self.weeder_y<0:
+                self.ctl_cmd = self.ctl_cmd-0.01
+            else:
+                self.ctl_cmd = self.ctl_cmd + 0.01
+
             msg = Float32MultiArray()
-            msg.data = [self.weeder_y]
+            msg.data = [self.ctl_cmd]
             self.weeder_control_pub.publish(msg)
         else:
             return

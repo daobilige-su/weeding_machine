@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /DepthCloud1/Auto Size1
+        - /Line_Image1/Status1
       Splitter Ratio: 0.5
     Tree Height: 427
   - Class: rviz/Selection
@@ -247,7 +248,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.772464275360107
+      Distance: 13.306082725524902
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -255,17 +256,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.9166269302368164
-        Y: 2.019679546356201
-        Z: 0.5186962485313416
+        X: 2.741036891937256
+        Y: 3.121062755584717
+        Z: 0.0907423198223114
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.4747971296310425
+      Pitch: 0.5597971677780151
       Target Frame: <Fixed Frame>
-      Yaw: 3.1086883544921875
+      Yaw: 2.9936842918395996
     Saved: ~
 Window Geometry:
   Detph_Image:
@@ -291,5 +292,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 2017
-  X: 2175
-  Y: 148
+  X: 2028
+  Y: 168
