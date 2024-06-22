@@ -5,7 +5,7 @@ import sys
 import tf
 import time
 import serial  # https://pyserial.readthedocs.io/en/latest/shortintro.html
-from std_msgs.msg import Float32MultiArray,String
+from std_msgs.msg import Float32MultiArray, String, Float32
 
 test_cmd = 1
 
@@ -20,7 +20,7 @@ class CmdSender:
         self.ser.parity = "N"  # 设置校验位
         self.ser.open()
 
-        self.speed_pub = rospy.Publisher("/speed_send", String, queue_size=1)
+        self.speed_pub = rospy.Publisher("/weeder_speed", Float32, queue_size=1)
         self.weeder_cmd_sub = rospy.Subscriber('/weeder_cmd', Float32MultiArray, self.weeder_cmd_cb)
         
         self.rs485_pub = rospy.Publisher("rs485_send", String, queue_size=1)
@@ -64,8 +64,11 @@ class CmdSender:
                     self.weeder_data = ''
                     time.sleep(0.1)
                     data = self.ser.readline()
-                    msg = String()
-                    msg.data =  data[13:].decode('GBK')     #数据1为反馈速度，单位为分米/秒,数据2为反馈机具偏移，单位为毫米
+                    msg = Float32()
+                    feedback_data =  data[13:].decode('GBK')     #数据1为反馈速度，单位为分米/秒,数据2为反馈机具偏移，单位为毫米
+                    # TODO, get the speed, and parse it to the var below.
+
+                    msg.data = 0.5 # TODO, must change it to the weeder speed.
                     self.speed_pub.publish(msg)     # str: "speed,offset"
                     rospy.loginfo('weeder反馈:%s',msg.data)
             except:
