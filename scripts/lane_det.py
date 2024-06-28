@@ -13,40 +13,45 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+import torch
 
 import rospkg
+import yaml
 
 class image_processor:
     def __init__(self):
+        # locate ros pkg
         rospack = rospkg.RosPack()
         self.pkg_path = rospack.get_path('weeding_machine') + '/'
-        self.seg_type = 1
-        self.img_size = np.array([240, 320])
+
+        # load key params
+        params_filename = self.pkg_path + 'cfg/' + 'param.yaml'
+        with open(params_filename, 'r') as file:
+            self.param = yaml.safe_load(file)
+        self.img_size = np.array([self.param['cam']['height'], self.param['cam']['width']])
         self.bird_pixel_size = 0.01
         self.max_line_width = 0.5
         self.verbose = 0
 
         # yolo5 detection
-        self.det_x_thr = None
-        self.yolo5_model_path = None
-        self.model = None
-        if self.seg_type == 2:
-            import torch
-            self.yolo5_model_path = self.pkg_path + 'weights/best.pt'
-            self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
-            self.det_x_thr = 20
+        self.yolo5_model_path = self.pkg_path + 'weights/best.pt'
+        self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
+        self.det_x_thr = 20
 
-        self.tf_listener = tf.TransformListener()
-
+        # cam vars, pubs and subs
+        self.left_img = None
+        self.right_img = None
+        self.cam_to_use = 0
         self.bridge = CvBridge()
-        self.pc2_sub = rospy.Subscriber("/left_rgb_cam/image_raw", Image, self.img_cb)
+        self.left_img_sub = rospy.Subscriber("/left_rgb_cam/image_raw", Image, self.left_img_cb)
+        self.right_img_sub = rospy.Subscriber("/right_rgb_cam/image_raw", Image, self.right_img_cb)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
         self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
-        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
-        self.weeder_speed_sub = rospy.Subscriber("/weeder_speed", Float32, self.speed_cb)
-        self.speed = 0.5
 
-        # mid line track
+        # weeder pub, sub and vars
+        self.weeder_speed = 1
+        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
+        self.weeder_speed_sub = rospy.Subscriber("/weeder_speed", Float32, self.weeder_speed_cb)
         self.mid_line_y = None
         self.control_bias = 0
         self.weeder_y = 0
@@ -57,63 +62,67 @@ class image_processor:
         # get camera intrinsic
         cam_info = rospy.wait_for_message("/left_rgb_cam/camera_info", CameraInfo)
         self.cam_K = np.array(cam_info.K).reshape((3, 3))
-
         # get camera extrinsic
-        self.cam_T = None
-        for i in range(10):
-            try:
-                (trans, rot) = self.tf_listener.lookupTransform('/base_link', '/left_rgb_cam', rospy.Time(0))
-                # M = transform_trans_quat_to_matrix(np.array([[trans[0]], [trans[1]], [trans[2]], [rot[0]], [rot[1]], [rot[2]], [rot[3]]]))
-                M = transform_trans_ypr_to_matrix(np.array([[0, 0, -0.65, 0, 0, np.pi/4.0]]))
-                self.cam_T = M
-                break
-            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                rospy.logwarn('image_processor: tf lookup failed')
-                if i == 9:
-                    return
-                else:
-                    rospy.sleep(1.0)
-
+        self.cam_T = transform_trans_ypr_to_matrix(np.array([[0, 0, -0.65, 0, 0, np.pi/4.0]]))
         # camera homography
         self.bird_img_size = None
         self.cam_H = None
         self.compute_homography()
 
-        pass
+        return
 
-    def speed_cb(self, msg):
-        self.speed = msg.data
+    # sub for weeder weeder_speed, simply store it in member var
+    def weeder_speed_cb(self, msg):
+        self.weeder_speed = msg.data
 
-    def img_cb(self, msg):
-
+    # sub for left cam img, store it in member var and call line detection if left cam is selected.
+    def left_img_cb(self, msg):
+        # store var
         try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            self.left_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         except CvBridgeError as e:
             print(e)
+            return
+        # call line detection if selected
+        if self.cam_to_use == 0:
+            self.img_cb(self.left_img)
+
+    # sub for right cam img, store it in member var and call line detection if right cam is selected.
+    def right_img_cb(self, msg):
+        # store var
+        try:
+            self.right_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        except CvBridgeError as e:
+            print(e)
+            return
+        # call line detection if selected
+        if self.cam_to_use == 1:
+            self.img_cb(self.right_img)
+
+    # the main loop: detect line and send back the result
+    def img_cb(self, cv_image):
 
         # (1) segment plants in the image
-        if self.seg_type == 1:
-            np_image = np.asarray(cv_image, dtype=np.float64)  # BRG
-            plant_seg = self.segment_plants_exg(np_image)
-        elif self.seg_type == 2:
-            plant_seg = self.segment_plants_yolo5(cv_image)
-        else:
-            rospy.logwarn('unknown plant segmentation type. skipping')
-            return
+        # segment plants with yolov5
+        plant_seg = self.segment_plants_yolo5(cv_image)
 
+        # publish segmentation results
         plant_seg_pub = np.asarray((plant_seg * 255).astype(np.uint8))
-
         try:
             ros_image = self.bridge.cv2_to_imgmsg(plant_seg_pub, "mono8")
         except CvBridgeError as e:
             print(e)
+            return
         self.seg_img_pub.publish(ros_image)
 
         # (2) detect lanes
+        # extract lines with the two step hough transform method
         lines, plant_seg_lines = self.detect_lanes(plant_seg)
         if lines is None:
+            rospy.logwarn('no lines are detected, skipping this image and returning ...')
             return
 
+        # publish line detection results
         try:
             ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
         except CvBridgeError as e:
@@ -121,26 +130,11 @@ class image_processor:
         self.line_img_pub.publish(ros_image)
 
         # (3) control weeder
+        # compute and send weeder cmd
         self.control_weeder(lines)
 
-        pass
-
-    def segment_plants_exg(self, np_image):
-        # mpl.__version__
-
-        # compute ExG index
-        exg_index = 2 * np_image[:, :, 1] - (np_image[:, :, 2] + np_image[:, :, 0])  # ExG = 2G-(R+B)
-        # debug
-        # plt.imshow(exg_index, cmap='gray')
-
-        # Otsu thresholding
-        # otsu_thr = filters.threshold_otsu(exg_index)
-        otsu_thr = 80
-        plant_seg = (exg_index > otsu_thr).astype(float)
-        # debug
-        # plt.imshow(plant_seg, cmap='gray')
-
-        return plant_seg
+        # return once everything successes
+        return
 
     def segment_plants_yolo5(self, np_image):
         image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
@@ -296,7 +290,7 @@ class image_processor:
             rospy.logwarn('lane y exceed the max lane width')
             return
 
-        speed = self.speed*0.5
+        speed = self.weeder_speed * 0.5
         cur_time = rospy.get_time()
         if (cur_time-self.ctl_time_pre)*speed>0.1:
             self.mid_y_buff[0:self.mid_y_buff.shape[0]-1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()

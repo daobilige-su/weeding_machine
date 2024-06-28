@@ -126,7 +126,7 @@ def run(
     conf_thres=0.001,  # confidence threshold
     iou_thres=0.6,  # NMS IoU threshold
     max_det=300,  # maximum detections per image
-    task="val",  # train, val, test, speed or study
+    task="val",  # train, val, test, weeder_speed or study
     device="",  # cuda device, i.e. 0 or 0,1,2,3 or cpu
     workers=8,  # max dataloader workers (per RANK in DDP mode)
     single_cls=False,  # treat as single-class dataset
@@ -194,7 +194,7 @@ def run(
                 f"classes). Pass correct combination of --weights and --data that are trained together."
             )
         model.warmup(imgsz=(1 if pt else batch_size, 3, imgsz, imgsz))  # warmup
-        pad, rect = (0.0, False) if task == "speed" else (0.5, pt)  # square inference for benchmarks
+        pad, rect = (0.0, False) if task == "weeder_speed" else (0.5, pt)  # square inference for benchmarks
         task = task if task in ("train", "val", "test") else "val"  # path to train/val/test images
         dataloader = create_dataloader(
             data[task],
@@ -372,7 +372,7 @@ def parse_opt():
     parser.add_argument("--conf-thres", type=float, default=0.001, help="confidence threshold")
     parser.add_argument("--iou-thres", type=float, default=0.6, help="NMS IoU threshold")
     parser.add_argument("--max-det", type=int, default=300, help="maximum detections per image")
-    parser.add_argument("--task", default="val", help="train, val, test, speed or study")
+    parser.add_argument("--task", default="val", help="train, val, test, weeder_speed or study")
     parser.add_argument("--device", default="", help="cuda device, i.e. 0 or 0,1,2,3 or cpu")
     parser.add_argument("--workers", type=int, default=8, help="max dataloader workers (per RANK in DDP mode)")
     parser.add_argument("--single-cls", action="store_true", help="treat as single-class dataset")
@@ -396,7 +396,7 @@ def parse_opt():
 
 
 def main(opt):
-    """Executes YOLOv5 tasks like training, validation, testing, speed, and study benchmarks based on provided
+    """Executes YOLOv5 tasks like training, validation, testing, weeder_speed, and study benchmarks based on provided
     options.
     """
     check_requirements(ROOT / "requirements.txt", exclude=("tensorboard", "thop"))
@@ -411,13 +411,13 @@ def main(opt):
     else:
         weights = opt.weights if isinstance(opt.weights, list) else [opt.weights]
         opt.half = torch.cuda.is_available() and opt.device != "cpu"  # FP16 for fastest results
-        if opt.task == "speed":  # speed benchmarks
-            # python val.py --task speed --data coco.yaml --batch 1 --weights yolov5n.pt yolov5s.pt...
+        if opt.task == "weeder_speed":  # weeder_speed benchmarks
+            # python val.py --task weeder_speed --data coco.yaml --batch 1 --weights yolov5n.pt yolov5s.pt...
             opt.conf_thres, opt.iou_thres, opt.save_json = 0.25, 0.45, False
             for opt.weights in weights:
                 run(**vars(opt), plots=False)
 
-        elif opt.task == "study":  # speed vs mAP benchmarks
+        elif opt.task == "study":  # weeder_speed vs mAP benchmarks
             # python val.py --task study --data coco.yaml --iou 0.7 --weights yolov5n.pt yolov5s.pt...
             for opt.weights in weights:
                 f = f"study_{Path(opt.data).stem}_{Path(opt.weights).stem}.txt"  # filename to save to
@@ -430,7 +430,7 @@ def main(opt):
             subprocess.run(["zip", "-r", "study.zip", "study_*.txt"])
             plot_val_study(x=x)  # plot
         else:
-            raise NotImplementedError(f'--task {opt.task} not in ("train", "val", "test", "speed", "study")')
+            raise NotImplementedError(f'--task {opt.task} not in ("train", "val", "test", "weeder_speed", "study")')
 
 
 if __name__ == "__main__":

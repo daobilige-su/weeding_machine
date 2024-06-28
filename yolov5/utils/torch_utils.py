@@ -155,7 +155,7 @@ def time_sync():
 
 
 def profile(input, ops, n=10, device=None):
-    """YOLOv5 speed/memory/FLOPs profiler
+    """YOLOv5 weeder_speed/memory/FLOPs profiler
     Usage:
         input = torch.randn(16, 3, 640, 640)
         m1 = lambda x: x * torch.sigmoid(x)

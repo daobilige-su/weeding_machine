@@ -9,7 +9,7 @@
     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
 
     <!--     image_processor -->
-    <node pkg="weeding_machine" type="lane_det.py" name="lane_det" output="screen"/>
+<!--     <node pkg="weeding_machine" type="lane_det.py" name="lane_det" output="screen"/> -->
 
     <!--     weeder_cmd_serial_comm -->
 <!--     <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/> -->

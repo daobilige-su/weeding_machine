@@ -29,6 +29,12 @@ they are pointing to libffi.so.8.X.X contained in the new conda env which is wro
 package like cv_bridge will get error like: 
 libp11-kit.so.0: undefined symbol: ffi_type_pointer)
 
+if receives error "AttributeError: partially initialized module 'charset_normalizer' 
+has no attribute 'md__mypyc' (most likely due to a circular import)", reinstall 
+"charset_normalizer" by:
+
+pip install --force-reinstall charset-normalizer==3.1.0
+
 ## Arduino to test serial comm:
 
 

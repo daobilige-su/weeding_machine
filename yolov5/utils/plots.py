@@ -268,7 +268,7 @@ def plot_targets_txt():
 def plot_val_study(file="", dir="", x=None):
     """
     Plots validation study results from 'study*.txt' files in a directory or a specific file, comparing model
-    performance and speed.
+    performance and weeder_speed.
 
     Example: from utils.plots import *; plot_val_study()
     """
