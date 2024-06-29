@@ -294,9 +294,9 @@ class image_processor:
             self.ctl_time_pre = cur_time
 
             # ctl_cmd = 0
-            # if self.mid_y_buff[0] > 0.10*self.max_line_width:
+            # if self.mid_y_buff[0] > 0.10*self.max_lane_width:
             #     ctl_cmd = -0.05
-            # elif self.mid_y_buff[0] < -0.25*self.max_line_width:
+            # elif self.mid_y_buff[0] < -0.25*self.max_lane_width:
             #     ctl_cmd = 0.05
 
             # self.weeder_y = self.weeder_y+ctl_cmd
