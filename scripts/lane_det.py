@@ -37,6 +37,7 @@ class image_processor:
         self.bird_roi_m = self.param['lane_det']['bird_roi']  # in weeder base_link coord, [y_max, y_min, x_max, x_min]
 
         # yolo5 detection
+        self.yolo5_plant_id = self.param['lane_det']['yolo_plant_id']
         self.yolo5_model_path = self.pkg_path + 'weights/' + self.param['lane_det']['yolo_model']
         self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
 
@@ -238,7 +239,7 @@ class image_processor:
         # convert bbox based object detection results to segmentation result, e.g. either draw rectangles or circles
         for bbox in bboxes:
             x1, y1, x2, y2, conf, cls = bbox
-            if int(cls) == 0:  # only select id=0, i.e. plants
+            if int(cls) == self.yolo5_plant_id:  # only select id=0, i.e. plants
                 # image_seg_bn = cv2.rectangle(image_seg_bn, (int(x1), int(y1)), (int(x2), int(y2)), 1, -1) # draw rect
                 image_seg_bn = cv2.circle(image_seg_bn, (int((x1 + x2) / 2.0), int((y1 + y2) / 2.0)),
                                           int(np.min(np.array([x2 - x1, y2 - y1]) / 2.0)), 1, -1)  # draw circle

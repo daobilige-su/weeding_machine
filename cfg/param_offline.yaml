@@ -14,7 +14,8 @@ cam:
 
 lane_det:
   verbose: 0
-  yolo_model: best_sim.pt
+  yolo_plant_id: 1
+  yolo_model: best_offline.pt
   bird_pixel_size: 0.01 # pixel size of bird eye view image, in meter
   max_lane_width: 0.5 # maximum lane width, in meter
   bird_roi: [2.0, -2.0, 5.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
