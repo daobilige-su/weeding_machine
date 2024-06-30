@@ -27,17 +27,17 @@ class image_processor:
         self.pkg_path = rospack.get_path('weeding_machine') + '/'
 
         # load key params
-        params_filename = self.pkg_path + 'cfg/' + 'param.yaml'
+        params_filename = rospy.get_param('param_file')  # self.pkg_path + 'cfg/' + 'param.yaml'
         with open(params_filename, 'r') as file:
             self.param = yaml.safe_load(file)
-        self.verbose = 0
+        self.verbose = self.param['lane_det']['verbose']
         self.img_size = np.array([self.param['cam']['height'], self.param['cam']['width']])
         self.bird_pixel_size = self.param['lane_det']['bird_pixel_size']
         self.max_lane_width = self.param['lane_det']['max_lane_width']
         self.bird_roi_m = self.param['lane_det']['bird_roi']  # in weeder base_link coord, [y_max, y_min, x_max, x_min]
 
         # yolo5 detection
-        self.yolo5_model_path = self.pkg_path + 'weights/best.pt'
+        self.yolo5_model_path = self.pkg_path + 'weights/' + self.param['lane_det']['yolo_model']
         self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
 
         # cam vars, pubs and subs
@@ -51,6 +51,7 @@ class image_processor:
                 return
         self.left_img_sub = rospy.Subscriber(self.param['cam']['left']['topic'], Image, self.left_img_cb, queue_size=1)
         self.right_img_sub = rospy.Subscriber(self.param['cam']['right']['topic'], Image, self.right_img_cb, queue_size=1)
+        self.proc_img_pub = rospy.Publisher('/proc_img/image_raw', Image, queue_size=2)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
         self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
 
@@ -59,7 +60,7 @@ class image_processor:
         self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
         self.weeder_speed_sub = rospy.Subscriber('/weeder_speed', Float32, self.weeder_speed_cb)
         self.mid_line_y = None
-        self.control_bias = 0
+        self.control_bias = self.param['weeder']['ctrl_bias']
         self.weeder_y = 0
         self.mid_y_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
         self.ctl_time_pre = -1
@@ -105,7 +106,7 @@ class image_processor:
     def left_img_cb(self, msg):
         # store var
         try:
-            self.left_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            self.left_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(msg, "bgr8"))
         except CvBridgeError as e:
             print(e)
             return
@@ -114,7 +115,7 @@ class image_processor:
     def right_img_cb(self, msg):
         # store var
         try:
-            self.right_img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+            self.right_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(msg, "bgr8"))
         except CvBridgeError as e:
             print(e)
             return
@@ -128,19 +129,19 @@ class image_processor:
         try:
             left_img_msg = rospy.wait_for_message(self.param['cam']['left']['topic'], Image, 100)
         except ROSException as e:
-            rospy.logwarn('lane_det: left image not received after 10s.')
+            rospy.logwarn('lane_det: left image not received after 100s.')
             rospy.logwarn(e)
             return False
         try:
             right_img_msg = rospy.wait_for_message(self.param['cam']['right']['topic'], Image, 100)
         except ROSException as e:
             rospy.logwarn(e)
-            rospy.logwarn('lane_det: right image not received after 10s.')
+            rospy.logwarn('lane_det: right image not received after 100s.')
             return False
         rospy.logwarn('both left and right camera images received. ')
 
-        left_cv_img = self.bridge.imgmsg_to_cv2(left_img_msg, "bgr8")
-        right_cv_img = self.bridge.imgmsg_to_cv2(right_img_msg, "bgr8")
+        left_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(left_img_msg, "bgr8"))
+        right_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(right_img_msg, "bgr8"))
 
         # get plant segmentation images
         left_image_seg_bn = self.segment_plants_yolo5(left_cv_img)
@@ -178,6 +179,14 @@ class image_processor:
 
         if cv_image is None:
             return
+        else:
+            # publish image to be processed
+            try:
+                ros_image = self.bridge.cv2_to_imgmsg(cv_image, "bgr8")
+            except CvBridgeError as e:
+                print(e)
+                return
+            self.proc_img_pub.publish(ros_image)
 
         # (1) segment plants in the image
         # segment plants with yolov5
@@ -480,6 +489,28 @@ class image_processor:
 
         # return vars
         return bird_img_size, H
+
+    # resize image to the target size, but keep the horizontal and vertical scale. crop image if needed
+    def resize_img_keep_scale(self, img):
+        # compute aspect ratio
+        img_ar = float(img.shape[0])/float(img.shape[1])
+        img_size = [img.shape[0], img.shape[1]]
+        tar_ar = float(self.img_size[0])/float(self.img_size[1])
+        tar_size = [self.img_size[0], self.img_size[1]]
+
+        # crop img
+        if img_ar>tar_ar:  # crop vertically
+            img_crop = img[max(int(float(img_size[0])/2.0 - float(img_size[1])*tar_ar/2.0), 0) \
+                : min(int(float(img_size[0])/2.0 + float(img_size[1])*tar_ar/2.0), img_size[0]), :]
+        else:  # crop horizontally
+            img_crop = img[:, max(int(float(img_size[1])/2.0 - (float(img_size[0])/tar_ar)/2.0), 0) \
+                : min(int(float(img_size[1])/2.0 + (float(img_size[0])/tar_ar)/2.0), img_size[1])]
+
+        # resize to target size
+        img_resize = cv2.resize(img_crop, (self.img_size[1], self.img_size[0]))
+
+        # return the resized image
+        return img_resize
 
 
 def main(args):

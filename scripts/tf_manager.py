@@ -3,10 +3,16 @@
 import rospy
 import sys
 import tf
+import yaml
 
 
 class TFManager:
     def __init__(self):
+        # load key params
+        params_filename = rospy.get_param('param_file')  # self.pkg_path + 'cfg/' + 'param.yaml'
+        with open(params_filename, 'r') as file:
+            self.param = yaml.safe_load(file)
+
         self.send_rate = rospy.Rate(10)  # send with 10 hz
         self.br = tf.TransformBroadcaster()
 
@@ -15,13 +21,13 @@ class TFManager:
                               child_frame, parent_frame)
 
     def send_tf(self):
-        self.tf_broadcast([0.000004, 2.250000, -0.000002], [0.000000, 0.000000, 0.000000, 1.000000],
+        self.tf_broadcast(self.param['tf']['Tblw'][0:3], self.param['tf']['Tblw'][3:7],
                           'left_weeder', 'base_link')
-        self.tf_broadcast([0.000002, -2.249999, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
+        self.tf_broadcast(self.param['tf']['Tbrw'][0:3], self.param['tf']['Tbrw'][3:7],
                           'right_weeder', 'base_link')
-        self.tf_broadcast([1.619993, -0.000001, 0.650002], [-0.653281, 0.653281, -0.270598, 0.270598],
+        self.tf_broadcast(self.param['tf']['Tlwlc'][0:3], self.param['tf']['Tlwlc'][3:7],
                           'left_rgb_cam', 'left_weeder')
-        self.tf_broadcast([1.620018, 0.000000, 0.650000], [-0.653282, 0.653282, -0.270598, 0.270598],
+        self.tf_broadcast(self.param['tf']['Trwrc'][0:3], self.param['tf']['Trwrc'][3:7],
                           'right_rgb_cam', 'right_weeder')
         self.tf_broadcast([0.000000, 0.000000, 0.000000], [0.000000, 0.000000, 0.000000, 1.000000],
                           'left_depth_cam', 'left_rgb_cam')

@@ -1,0 +1,15 @@
+<launch>
+    <param name="param_file" type="str" value="$(find weeding_machine)/cfg/param_sim.yaml" />
+
+    <!--   rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/main.rviz"/>
+
+    <!--     tf_manager -->
+    <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
+
+    <!--     lane_det -->
+    <node pkg="weeding_machine" type="lane_det.py" name="lane_det" output="screen"/>
+
+    <!--     weeder_cmd_serial_comm -->
+    <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/>
+</launch>

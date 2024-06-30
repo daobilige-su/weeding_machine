@@ -1,0 +1,49 @@
+cam:
+  cam_to_use: 0 # -1: undetermined, 0: left, 1: right
+  cam_sel_min_perc_plant: 0.1 # the min percentage of plant pixel within the entire seg image, used for cam sel
+  width: 320
+  height: 240
+  left:
+    topic: /camera/image_raw
+    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
+    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
+  right:
+    topic: /right_rgb_cam/image_raw
+    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
+    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
+
+lane_det:
+  verbose: 0
+  yolo_model: best_sim.pt
+  bird_pixel_size: 0.01 # pixel size of bird eye view image, in meter
+  max_lane_width: 0.5 # maximum lane width, in meter
+  bird_roi: [2.0, -2.0, 5.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
+  hough_theta_range: [-20, 20] # theta ranges to search for during the 1st hough transform, in degree
+  hough_hist_thr: 10 # the minimum hough transform histogram value
+  hough_theta_sel_r_range: [-2, 2] #
+
+weeder:
+  def_speed: 0.5 # default weeder speed, m/s
+  cmd_buffer_size: 35 # weeder cmd buffer
+  cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
+  ctrl_p: 0.5 # proportional gain for P controller
+  ctrl_u_min: 0.01 # the minimum control cmd in meter
+  ctrl_bias: 0.0 # how much bias should be added to weeder control in weeding Y coord
+  ser_port: /dev/ttyUSB0 # serial port for weeder mic
+  baudrate: 115200
+  bytesize: 8  # len
+  stopbits: 1
+  parity: N
+  mic_response_time: 0.1 # after weeder control cmd is send, how long it should wait for weeder mic to respond
+  hardware_interaction: 0 # whether weeder mic is connected, enable serial, otherwise not
+  verbose: 0
+
+tf:
+  Tlwlc: [1.619993, -0.000001, 0.650002, -0.653281, 0.653281, -0.270598, 0.270598] # t+quat, left cam in left weeder
+  Tblw: [0.000004, 2.250000, -0.000002, 0.000000, 0.000000, 0.000000, 1.000000] # t+quat, left weeder in base_link
+  Trwrc: [1.620018, 0.000000, 0.650000, -0.653282, 0.653282, -0.270598, 0.270598] # t+quat, right cam in left weeder
+  Tbrw: [0.000002, -2.249999, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000] # t+quat, right weeder in base_link
+
+
+
+
