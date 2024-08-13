@@ -2,7 +2,7 @@
     <param name="param_file" type="str" value="$(find weeding_machine)/cfg/param_sim.yaml" />
 
     <!--   rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/main.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/sim.rviz"/>
 
     <!--     tf_manager -->
     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>

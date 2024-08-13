@@ -23,9 +23,9 @@ class cam_ext_tuner():
     def __init__(self):
         # KEY PARAMS
         self.cam_topic = '/camera/image_raw'
-        self.K = np.array([159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]).reshape((3, 3))
-        self.T_t_ypr = np.array([0, 0, -0.65, 0, 0, 0.785398])
-        self.theta_range = np.deg2rad(range(0, 90, 2))
+        self.K = np.array([226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]).reshape((3, 3))
+        self.T_t_ypr = np.array([0, 0, -0.74, np.deg2rad(-2), 0, np.deg2rad(54)])
+        self.theta_range = np.deg2rad(range(54, 90, 2))
 
         # locate ros pkg
         rospack = rospkg.RosPack()

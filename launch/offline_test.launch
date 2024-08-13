@@ -10,6 +10,12 @@
     <!--     lane_det -->
     <node pkg="weeding_machine" type="lane_det.py" name="lane_det" output="screen"/>
 
+<!--     <node pkg="rosbag" type="play" name="play_file1" output="screen" args="-r 0.2 /home/zhong/my_workspace/src/bag/9.bag"> -->
+<!--     <param name="start_paused" value="false"/> -->
+<!--     </node> -->
+<!--     <node pkg="rosbag" type="play" name="play_file2" output="screen" args="-r 0.2 /home/zhong/my_workspace/src/bag/10.bag"> -->
+<!--     <param name="start_paused" value="false"/> -->
+<!--     </node> -->
     <!--     weeder_cmd_serial_comm -->
     <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/>
 </launch>

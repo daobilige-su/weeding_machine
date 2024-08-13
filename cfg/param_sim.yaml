@@ -1,5 +1,6 @@
 cam:
   cam_to_use: -1 # -1: undetermined, 0: left, 1: right
+  cam_sel_time_interval: 100000 # how long time in second is need to operate camera re-selection again.
   cam_sel_min_perc_plant: 0.1 # the min percentage of plant pixel within the entire seg image, used for cam sel
   width: 320
   height: 240

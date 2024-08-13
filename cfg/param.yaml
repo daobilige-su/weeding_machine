@@ -1,21 +1,24 @@
 cam:
-  cam_to_use: -1 # -1: undetermined, 0: left, 1: right
+  cam_to_use: 0 # -1: undetermined, 0: left, 1: right
+  cam_sel_time_interval: 100000 # how long time in second is need to operate camera re-selection again.
   cam_sel_min_perc_plant: 0.1 # the min percentage of plant pixel within the entire seg image, used for cam sel
   width: 320
   height: 240
   left:
-    topic: /left_rgb_cam/image_raw
+    pid: 0x0001
+    topic: /usb_cam1/image_raw
     K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     T: [0, 0, -0.65, 0, 0, 0.785398] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
   right:
-    topic: /right_rgb_cam/image_raw
+    pid: 0x0002
+    topic: /usb_cam2/image_raw
     K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     T: [0, 0, -0.65, 0, 0, 0.785398] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
 
 lane_det:
   verbose: 0
   yolo_plant_id: 1
-  yolo_model: best_sim.pt
+  yolo_model: best_offline.pt
   bird_pixel_size: 0.01 # pixel size of bird eye view image, in meter
   max_lane_width: 0.5 # maximum lane width, in meter
   bird_roi: [2.0, -2.0, 5.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]

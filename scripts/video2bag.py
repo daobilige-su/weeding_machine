@@ -24,7 +24,7 @@ def CreateVideoBag(videopath, bagname):
         ret, frame = cap.read()
         if not ret:
             break
-        stamp = rospy.rostime.Time.from_sec(float(frame_id) / prop_fps)
+        stamp = rospy.Time.from_sec(time.time())
         frame_id += 1
         image = cb.cv2_to_imgmsg(frame, "bgr8")
         image.header.stamp = stamp
@@ -39,3 +39,5 @@ if __name__ == "__main__":
         CreateVideoBag(*sys.argv[1:])
     else:
         print( "Usage: video2bag videofilename bagfilename")
+
+#python video2bag.py /home/zhong/my_workspace/src/weeding_machine/yolov5/data/3_reg.mp4 /home/zhong/my_workspace/src/bag/3r.bag

@@ -5,7 +5,6 @@ import sys
 import tf
 from sensor_msgs.msg import PointCloud2, Image, CameraInfo
 from std_msgs.msg import Float32MultiArray, Float32
-
 import ros_numpy
 from transform_tools import *
 from rospy.exceptions import ROSException
@@ -47,8 +46,6 @@ class image_processor:
         self.right_img = None
         self.bridge = CvBridge()
         self.cam_to_use = self.param['cam']['cam_to_use']
-        self.cam_sel_time_interval = self.param['cam']['cam_sel_time_interval']
-        self.choose_cam_pre_time = rospy.get_time()
         if self.cam_to_use == -1:
             if not self.select_cam():
                 rospy.logwarn('camera auto selection failed.')
@@ -58,10 +55,8 @@ class image_processor:
         self.proc_img_pub = rospy.Publisher('/proc_img/image_raw', Image, queue_size=2)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
         self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
-        self.det_img_left_pub = rospy.Publisher('/det_img/image_raw_left', Image, queue_size=2)
-        self.det_img_right_pub = rospy.Publisher('/det_img/image_raw_right', Image, queue_size=2)
-        self.line_rgb_left_pub = rospy.Publisher('/line_rgb/iamge_raw_left', Image, queue_size=2)
-        self.line_rgb_right_pub = rospy.Publisher('/line_rgb/iamge_raw_right', Image, queue_size=2)
+        self.det_img_pub = rospy.Publisher('/det_img/image_raw', Image, queue_size=2)
+        self.choose_cam_per_time = rospy.get_time()
 
         # weeder pub, sub and vars
         self.weeder_speed = self.param['weeder']['def_speed']
@@ -85,25 +80,24 @@ class image_processor:
         self.right_bird_img_size = None
         self.left_cam_H = None
         self.right_cam_H = None
-        # computes self.left_bird_img_size, self.right_bird_img_size, self.left_cam_H, self.right_cam_H
-        # Note that left_bird_img_size and right_bird_img_size is in the order of (u,v), not (v,u) in image!!
+        # computes self.left_bird_img_size, self.left_bird_img_size, self.left_cam_H = None, self.right_cam_H
         self.left_bird_img_size, self.left_cam_H = self.compute_homography(self.left_cam_K, self.left_cam_T)
         self.right_bird_img_size, self.right_cam_H = self.compute_homography(self.right_cam_K, self.right_cam_T)
         # bird eye view roi in meter to that in percentage
         self.left_bird_roi_perc = [
-            (-self.bird_roi_m[0] / self.bird_pixel_size + self.left_bird_img_size[0] / 2.0) / self.left_bird_img_size[
-                0],
-            (-self.bird_roi_m[1] / self.bird_pixel_size + self.left_bird_img_size[0] / 2.0) / self.left_bird_img_size[
-                0],
-            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.left_bird_img_size[1]),
-            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.left_bird_img_size[1])]
+            (-self.bird_roi_m[0] / self.bird_pixel_size + self.left_bird_img_size[1] / 2.0) / self.left_bird_img_size[
+                1],
+            (-self.bird_roi_m[1] / self.bird_pixel_size + self.left_bird_img_size[1] / 2.0) / self.left_bird_img_size[
+                1],
+            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.left_bird_img_size[0]),
+            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.left_bird_img_size[0])]
         self.right_bird_roi_perc = [
-            (-self.bird_roi_m[0] / self.bird_pixel_size + self.right_bird_img_size[0] / 2.0) / self.right_bird_img_size[
-                0],
-            (-self.bird_roi_m[1] / self.bird_pixel_size + self.right_bird_img_size[0] / 2.0) / self.right_bird_img_size[
-                0],
-            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.right_bird_img_size[1]),
-            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.right_bird_img_size[1])]
+            (-self.bird_roi_m[0] / self.bird_pixel_size + self.right_bird_img_size[1] / 2.0) / self.right_bird_img_size[
+                1],
+            (-self.bird_roi_m[1] / self.bird_pixel_size + self.right_bird_img_size[1] / 2.0) / self.right_bird_img_size[
+                1],
+            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.right_bird_img_size[0]),
+            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.right_bird_img_size[0])]
 
         return
 
@@ -131,10 +125,10 @@ class image_processor:
 
     # select best camera based on the number plants detected and the total plant area
     def select_cam(self):
-        rospy.logwarn('auto selection of camera started.')
+        rospy.loginfo('auto selection of camera started.')
 
         # obtain camera images
-        rospy.logwarn('waiting 100s for left and right camera images ...')
+        rospy.loginfo('waiting 100s for left and right camera images ...')
         try:
             left_img_msg = rospy.wait_for_message(self.param['cam']['left']['topic'], Image, 100)
         except ROSException as e:
@@ -147,14 +141,14 @@ class image_processor:
             rospy.logwarn(e)
             rospy.logwarn('lane_det: right image not received after 100s.')
             return False
-        rospy.logwarn('both left and right camera images received. ')
+        rospy.loginfo('both left and right camera images received. ')
 
         left_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(left_img_msg, "bgr8"))
         right_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(right_img_msg, "bgr8"))
 
         # get plant segmentation images
-        left_image_seg_bn, image1 = self.segment_plants_yolo5(left_cv_img)
-        right_image_seg_bn, image2 = self.segment_plants_yolo5(right_cv_img)
+        left_image_seg_bn, image = self.segment_plants_yolo5(left_cv_img)
+        right_image_seg_bn, image = self.segment_plants_yolo5(right_cv_img)
         # compute plant area
         left_plant_area = np.sum(left_image_seg_bn)
         right_plant_area = np.sum(right_image_seg_bn)
@@ -163,24 +157,23 @@ class image_processor:
         if (left_plant_area>=right_plant_area) and \
                 (left_plant_area>=self.param['cam']['cam_sel_min_perc_plant']*self.img_size[0]*self.img_size[1]):
             self.cam_to_use = 0
-            rospy.logwarn('left camera is selected.')
+            rospy.loginfo('left camera is selected.')
         elif (right_plant_area>left_plant_area) and \
                 (right_plant_area>self.param['cam']['cam_sel_min_perc_plant']*self.img_size[0]*self.img_size[1]):
             self.cam_to_use = 1
             rospy.logwarn('right camera is selected.')
         else:
             rospy.logwarn('lane_det: not enough plant area detected when selecting camera.')
-            return False
+            return True
 
         return True
 
     # the main loop: detect line and send back the result
     def img_cb(self):
-        #choose camera in each 0.5s
-        choose_cam_cur_time = rospy.get_time()
-        if choose_cam_cur_time - self.choose_cam_pre_time >= self.cam_sel_time_interval:
+        choose_cam_cur_time = rospy.get_time()  #add cam choose
+        if choose_cam_cur_time - self.choose_cam_per_time >= 0.5:
             self.select_cam()
-            self.choose_cam_pre_time = rospy.get_time()
+            self.choose_cam_per_time = rospy.get_time()
         # select left or right camera image for lane detection
         if self.cam_to_use == 0:
             cv_image = self.left_img
@@ -208,20 +201,17 @@ class image_processor:
         # publish segmentation results
         plant_seg_pub = np.asarray((plant_seg * 255).astype(np.uint8))
         try:
-            ros_image = self.bridge.cv2_to_imgmsg(plant_seg_pub, "mono8")
+            ros_image = self.bridge.cv2_to_imgmsg(plant_seg, "mono8")
             det_image = self.bridge.cv2_to_imgmsg(det_image,"bgr8")
         except CvBridgeError as e:
             print(e)
             return
         self.seg_img_pub.publish(ros_image)
-        if self.cam_to_use==0:
-            self.det_img_left_pub.publish(det_image)
-        elif self.cam_to_use==1:
-            self.det_img_right_pub.publish(det_image)
+        self.det_img_pub.publish(det_image)
 
         # (2) detect lanes
         # extract lines with the two step hough transform method
-        lines, plant_seg_lines, rgb_lines = self.detect_lanes(plant_seg, cv_image)
+        lines, plant_seg_lines = self.detect_lanes(plant_seg)
         if lines is None:
             rospy.logwarn('no lines are detected, skipping this image and returning ...')
             return
@@ -229,14 +219,9 @@ class image_processor:
         # publish line detection results
         try:
             ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
-            rgb_lines = self.bridge.cv2_to_imgmsg(rgb_lines, "bgr8")
         except CvBridgeError as e:
             print(e)
         self.line_img_pub.publish(ros_image)
-        if self.cam_to_use == 0:
-            self.line_rgb_left_pub.publish(rgb_lines)
-        elif self.cam_to_use==1:
-            self.line_rgb_right_pub.publish(rgb_lines)
 
         # (3) control weeder
         # compute and send weeder cmd
@@ -247,9 +232,10 @@ class image_processor:
 
     # segment plants using yolov5, return a binary image with plant area (1) and everything else (0)
     def segment_plants_yolo5(self, np_image):
-        det_image = np_image.copy()
+        # image = np_image.copy()
+        image = np_image
         image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
-
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         # detection
         results = self.model(image_rgb)
 
@@ -263,22 +249,24 @@ class image_processor:
         for bbox in bboxes:
             x1, y1, x2, y2, conf, cls = bbox
             if int(cls) == 0 and conf > 0.4 and y2 - y1 < 15 and x2 - x1 < 15:  # only select id=0, i.e. plants
-                cv2.rectangle(det_image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 2)
+                cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 2)
             if int(cls) == self.yolo5_plant_id:  # only select id=0, i.e. plants
+                cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+                # label = f'{labels.get(cls_id, "cls")}: {confidence:.2f}'
+                # cv2.putText(image_rgb, label, (int(x1), int(y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 2)
                 # image_seg_bn = cv2.rectangle(image_seg_bn, (int(x1), int(y1)), (int(x2), int(y2)), 1, -1) # draw rect
                 image_seg_bn = cv2.circle(image_seg_bn, (int((x1 + x2) / 2.0), int((y1 + y2) / 2.0)),
                                           int(np.min(np.array([x2 - x1, y2 - y1]) / 2.0)), 1, -1)  # draw circle
-                cv2.rectangle(det_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
         # return seg result, i.e. a binary image
-        return image_seg_bn, det_image
+        return image_seg_bn,image
 
     # detect farm lanes based on the plant segmentation image
     # (1) convert the perspective image to the bird eye image.
     # (2) use hough transform to estimate the theta angle by averaging top 10 thetas
     # (3) estimate r of line again with hough transform, by fixing the theta angle
     # (4) merge nearby lines and compute v coordinates of lines with max u coordinates
-    def detect_lanes(self, plant_seg, cv_image):
+    def detect_lanes(self, plant_seg):
 
         # choose proper params
         if self.cam_to_use == 0:
@@ -293,14 +281,11 @@ class image_processor:
             rospy.logwarn('lane_det: unknown camera selection.')
             return
 
-        # change binary image to
-
+        # change binary image to uint8
         plant_seg_rgb = np.asarray((plant_seg * 255).astype(np.uint8))
 
         # convert perspective image to the bird eye view image using camera homography matrix
         bird_eye_view_raw = cv2.warpPerspective(plant_seg_rgb, cam_H,
-                                                (int(bird_img_size[0]), int(bird_img_size[1])), flags=cv2.INTER_NEAREST)
-        bird_eye_view_rgb = cv2.warpPerspective(cv_image, cam_H,
                                                 (int(bird_img_size[0]), int(bird_img_size[1])), flags=cv2.INTER_NEAREST)
 
         # only keep plants in roi
@@ -317,7 +302,7 @@ class image_processor:
                                np.deg2rad(self.param['lane_det']['hough_theta_range'][1]))
         if lines is None:
             rospy.logwarn('HoughLines: no lines are detected.')
-            return None, None, None
+            return None, None
 
         # lines2d [[r1, r2, ...], [theta1, theta2, ...]]
         lines2d = lines.reshape((lines.shape[0], lines.shape[2]))
@@ -341,7 +326,7 @@ class image_processor:
         lines_theta = thetas[0:idx]
         if idx == 0:
             rospy.logwarn('detect_lanes: not enough middle lines detected.')
-            return None, None, None
+            return None, None
         theta = np.mean(lines_theta)
 
         # 2nd hough transform, fix the theta and find the r
@@ -349,7 +334,7 @@ class image_processor:
                                theta, theta + np.deg2rad(1))
         if lines is None:
             rospy.logwarn('HoughLines: no lines are detected.')
-            return None, None, None
+            return None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
         # combine detected lines close to half lane width
@@ -400,7 +385,7 @@ class image_processor:
                 pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
                 pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
                 cv2.line(bird_eye_view_lines, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
-                cv2.line(bird_eye_view_rgb, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
+
                 pt_edge_x = (rho - bird_eye_view.shape[0] * b) / a
                 lines_x_theta[0, i] = pt_edge_x
                 cv2.circle(bird_eye_view_lines, (int(bird_eye_view.shape[1] / 2.0), bird_eye_view.shape[0]), 5,
@@ -408,7 +393,7 @@ class image_processor:
                 cv2.circle(bird_eye_view_lines, (int(pt_edge_x), bird_eye_view.shape[0]), 5, (0, 0, 255), 1)
 
         # return the lane params, and bird eye image with lanes
-        return lines_x_theta, bird_eye_view_lines , bird_eye_view_rgb
+        return lines_x_theta, bird_eye_view_lines
 
     # compute weeder's absolute position shift based on the detected lane params.
     # lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
@@ -513,8 +498,6 @@ class image_processor:
 
         # compute max pixel coords in (u,v)
         bird_img_size = np.max(outputpts, axis=0)
-        # # change the order to (v,u) to be consistent with image size
-        # bird_img_size = np.array([bird_img_size[1], bird_img_size[0]])
 
         # compute homography matrix
         H = cv2.getPerspectiveTransform(inputpts, outputpts)
