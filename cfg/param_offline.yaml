@@ -9,7 +9,7 @@ cam:
 #    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
 #    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
-    T: [0, 0, -0.74, -0.03490659, 0, 0.9424778] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
+    T: [0, 0, -0.74, 0, 0, 0.9424778] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
   right:
     topic: /right_rgb_cam/image_raw
     K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
@@ -29,7 +29,9 @@ lane_det:
 
 weeder:
   def_speed: 0.5 # default weeder speed, m/s
-  cmd_buffer_size: 35 # weeder cmd buffer
+  def_pos: 0.0 # default weeder position, m  # TODO
+  weeder_cmd_delay: 0  # TODO
+  cmd_buffer_size: 16 # weeder cmd buffer
   cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ctrl_p: 0.5 # proportional gain for P controller
   ctrl_u_min: 0.01 # the minimum control cmd in meter

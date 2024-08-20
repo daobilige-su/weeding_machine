@@ -1,5 +1,5 @@
 cam:
-  cam_to_use: -1 # -1: undetermined, 0: left, 1: right
+  cam_to_use: 0 # -1: undetermined, 0: left, 1: right
   cam_sel_time_interval: 100000 # how long time in second is need to operate camera re-selection again.
   cam_sel_min_perc_plant: 0.1 # the min percentage of plant pixel within the entire seg image, used for cam sel
   width: 320
@@ -26,7 +26,9 @@ lane_det:
 
 weeder:
   def_speed: 0.5 # default weeder speed, m/s
-  cmd_buffer_size: 35 # weeder cmd buffer
+  def_pos: 0.0 # default weeder position, m  # TODO
+  weeder_cmd_delay: 1  # TODO
+  cmd_buffer_size: 16 # weeder cmd buffer
   cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ctrl_p: 0.5 # proportional gain for P controller
   ctrl_u_min: 0.01 # the minimum control cmd in meter

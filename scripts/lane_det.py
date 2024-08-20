@@ -15,6 +15,8 @@ from cv_bridge import CvBridge, CvBridgeError
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
+from scipy.stats import multivariate_normal
+
 import torch
 
 import rospkg
@@ -65,14 +67,17 @@ class image_processor:
 
         # weeder pub, sub and vars
         self.weeder_speed = self.param['weeder']['def_speed']
+        self.weeder_pos = self.param['weeder']['def_pos']  # TODO
         self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
-        self.weeder_speed_sub = rospy.Subscriber('/weeder_speed', Float32, self.weeder_speed_cb)
+        self.weeder_speed_pos_sub = rospy.Subscriber('/weeder_speed_pos', Float32MultiArray, self.weeder_speed_pos_cb)  # TODO
         self.mid_line_y = None
         self.control_bias = self.param['weeder']['ctrl_bias']
         self.weeder_y = 0
         self.mid_y_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
+        self.weeder_pos_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))  # TODO
         self.ctl_time_pre = -1
         self.ctl_cmd = 0
+        self.weeder_cmd_delay = self.param['weeder']['weeder_cmd_delay']  # TODO
 
         # get camera intrinsic
         self.left_cam_K = np.array(self.param['cam']['left']['K']).reshape((3, 3))
@@ -107,9 +112,10 @@ class image_processor:
 
         return
 
-    # sub for weeder weeder_speed, simply store it in member var
-    def weeder_speed_cb(self, msg):
-        self.weeder_speed = msg.data
+    # TODO, sub for weeder weeder speed and pos, simply store it in member var
+    def weeder_speed_pos_cb(self, msg):
+        self.weeder_speed = msg.data[0]
+        self.weeder_pos = msg.data[1]
 
     # sub for left cam img, store it in member var and call line detection if left cam is selected.
     def left_img_cb(self, msg):
@@ -153,8 +159,8 @@ class image_processor:
         right_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(right_img_msg, "bgr8"))
 
         # get plant segmentation images
-        left_image_seg_bn, image1 = self.segment_plants_yolo5(left_cv_img)
-        right_image_seg_bn, image2 = self.segment_plants_yolo5(right_cv_img)
+        left_image_seg_bn, image1, left_image_seg_gaus = self.segment_plants_yolo5(left_cv_img)
+        right_image_seg_bn, image2, right_image_seg_gaus = self.segment_plants_yolo5(right_cv_img)
         # compute plant area
         left_plant_area = np.sum(left_image_seg_bn)
         right_plant_area = np.sum(right_image_seg_bn)
@@ -203,10 +209,10 @@ class image_processor:
 
         # (1) segment plants in the image
         # segment plants with yolov5
-        plant_seg, det_image = self.segment_plants_yolo5(cv_image)
+        plant_seg_bn, det_image = self.segment_plants_yolo5(cv_image)
 
         # publish segmentation results
-        plant_seg_pub = np.asarray((plant_seg * 255).astype(np.uint8))
+        plant_seg_pub = np.asarray((plant_seg_bn * 255).astype(np.uint8))
         try:
             ros_image = self.bridge.cv2_to_imgmsg(plant_seg_pub, "mono8")
             det_image = self.bridge.cv2_to_imgmsg(det_image,"bgr8")
@@ -220,10 +226,10 @@ class image_processor:
             self.det_img_right_pub.publish(det_image)
 
         # (2) detect lanes
-        # extract lines with the two step hough transform method
-        lines, plant_seg_lines, rgb_lines = self.detect_lanes(plant_seg, cv_image)
+        # extract lane_det_lines with the two step hough transform method
+        lines, plant_seg_lines, rgb_lines = self.detect_lanes(plant_seg_bn, cv_image)
         if lines is None:
-            rospy.logwarn('no lines are detected, skipping this image and returning ...')
+            rospy.logwarn('no lane_det_lines are detected, skipping this image and returning ...')
             return
 
         # publish line detection results
@@ -260,6 +266,7 @@ class image_processor:
         bboxes = results.xyxy[0].cpu().numpy()
 
         # convert bbox based object detection results to segmentation result, e.g. either draw rectangles or circles
+        bboxes_idx = 0
         for bbox in bboxes:
             x1, y1, x2, y2, conf, cls = bbox
             if int(cls) == 0 and conf > 0.4 and y2 - y1 < 15 and x2 - x1 < 15:  # only select id=0, i.e. plants
@@ -277,7 +284,7 @@ class image_processor:
     # (1) convert the perspective image to the bird eye image.
     # (2) use hough transform to estimate the theta angle by averaging top 10 thetas
     # (3) estimate r of line again with hough transform, by fixing the theta angle
-    # (4) merge nearby lines and compute v coordinates of lines with max u coordinates
+    # (4) merge nearby lane_det_lines and compute v coordinates of lane_det_lines with max u coordinates
     def detect_lanes(self, plant_seg, cv_image):
 
         # choose proper params
@@ -316,7 +323,7 @@ class image_processor:
                                np.deg2rad(self.param['lane_det']['hough_theta_range'][0]),
                                np.deg2rad(self.param['lane_det']['hough_theta_range'][1]))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None, None
 
         # lines2d [[r1, r2, ...], [theta1, theta2, ...]]
@@ -325,7 +332,7 @@ class image_processor:
         lines2d[lines2d[:, 0] < 0, 1] = ((lines2d[lines2d[:, 0] < 0, 1] + np.pi) + np.pi) % (
                     2 * np.pi) - np.pi  # wrap to pi
         lines2d[lines2d[:, 0] < 0, 0] = -lines2d[lines2d[:, 0] < 0, 0]
-        # extract the top 10 lines
+        # extract the top 10 lane_det_lines
         lines_theta = lines2d[0:10, 1]
         lines_r = lines2d[0:10, 0]
 
@@ -340,7 +347,7 @@ class image_processor:
                 idx = idx + 1
         lines_theta = thetas[0:idx]
         if idx == 0:
-            rospy.logwarn('detect_lanes: not enough middle lines detected.')
+            rospy.logwarn('detect_lanes: not enough middle lane_det_lines detected.')
             return None, None, None
         theta = np.mean(lines_theta)
 
@@ -348,11 +355,11 @@ class image_processor:
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), self.param['lane_det']['hough_hist_thr'], None, 0, 0, \
                                theta, theta + np.deg2rad(1))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
-        # combine detected lines close to half lane width
+        # combine detected lane_det_lines close to half lane width
         r_thr = self.max_lane_width * 0.5 / self.bird_pixel_size
         # order r in ascending order, r can be both positive or negative now
         lines_r_asc = np.sort(lines_r)
@@ -411,7 +418,7 @@ class image_processor:
         return lines_x_theta, bird_eye_view_lines , bird_eye_view_rgb
 
     # compute weeder's absolute position shift based on the detected lane params.
-    # lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
+    # lane_det_lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
     # where x1, x2, ... are u coordinates of intersections of lanes with the bottom of the image
     def control_weeder(self, lines):
         # compute lanes' closest y coords in the weeder frame from their u coordinates of intersections of lanes with
@@ -438,14 +445,24 @@ class image_processor:
             return
 
         # after a fixed distance, send weeder control cmd
+        if self.ctl_time_pre == -1:
+            self.ctl_time_pre = rospy.get_time()
         cur_time = rospy.get_time()
         if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
-            self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()
-            self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y
+            step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
+            for step in range(step_num):  # TODO
+                self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()  # TODO
+                self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y  # TODO
+                self.weeder_pos_buff[0:self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos_buff[1:self.weeder_pos_buff.shape[0]].copy()  # TODO
+                self.weeder_pos_buff[self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos  # TODO
+
             self.ctl_time_pre = cur_time
 
             # self.weeder_y = self.mid_y_buff[0]  # extract the earliest position shift
-            self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift
+            if self.weeder_cmd_delay:  # TODO
+                self.weeder_y = self.mid_y_buff[0] + self.weeder_pos_buff[0] - self.weeder_pos  # TODO
+            else:  # TODO
+                self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift  # TODO
 
             # compute the control command u using the classic P controller
             u = self.weeder_y * self.param['weeder']['ctrl_p']  # p controller

@@ -38,10 +38,13 @@ class CmdSender:
         self.weeder_data = None
 
         # pubs and subs
-        self.speed_pub = rospy.Publisher("/weeder_speed", Float32, queue_size=1)
+        self.speed_pos_pub = rospy.Publisher("/weeder_speed_pos", Float32MultiArray, queue_size=1)  # TODO
         self.weeder_cmd_sub = rospy.Subscriber('/weeder_cmd', Float32MultiArray, self.weeder_cmd_cb)
+        self.weeder_sim_status_sub = rospy.Subscriber('/weeder_sim_status', Float32MultiArray, self.weeder_sim_status_cb)  # TODO
         self.rs485_pub = rospy.Publisher("rs485_send", String, queue_size=1)
         self.color_sub = rospy.Subscriber("HMI_send_data", String, self.hmi_cmd_cb,queue_size=1, buff_size=52428800)
+        self.default_weeder_speed = self.param['weeder']['def_speed']  # TODO
+        self.default_weeder_pos = self.param['weeder']['def_pos']  # TODO
         
     def __del__(self):
         if self.hw_action:
@@ -60,6 +63,12 @@ class CmdSender:
         # timer callback function
         self.HMI_data = msg
 
+    # TODO
+    def weeder_sim_status_cb(self, msg):
+        self.default_weeder_speed = msg.data[0]
+        self.default_weeder_pos = msg.data[1]
+        return
+
     # communicate with weeder microcontroller, send and receive data
     def handle_hardware(self):
         if self.hw_action:
@@ -74,7 +83,7 @@ class CmdSender:
                     # sleep for 0.1s for mic to send back feedback data
                     rospy.sleep(self.mic_response_time)
 
-                    feedback_data = str(self.param['weeder']['def_speed']*10.0) + ',0.0' # default speed (m/s to dm/s)
+                    feedback_data = str(self.default_weeder_speed*10.0) + ',' + str(self.default_weeder_pos*1000.0) # TODO. m/s to dm/s, m to mm
                     if self.hw_action:
                         # read weeder feedback
                         data = self.ser.readline()
@@ -84,11 +93,11 @@ class CmdSender:
                     speed, pos = self.extract_speed_and_pos(feedback_data)
 
                     # publish weeder status
-                    weeder_speed_msg = Float32()
-                    weeder_speed_msg.data = speed
-                    self.speed_pub.publish(weeder_speed_msg)
+                    weeder_speed_pos_msg = Float32MultiArray()  # TODO
+                    weeder_speed_pos_msg.data = [speed, pos]  # TODO
+                    self.speed_pos_pub.publish(weeder_speed_pos_msg)  # TODO
                     if self.verbose:
-                        rospy.loginfo('weeder反馈:%s', weeder_speed_msg.data)
+                        rospy.loginfo('weeder反馈:%s', weeder_speed_pos_msg.data)
 
                 # handle monitor hmi
                 if self.HMI_data.data != '':    # monitor
@@ -108,14 +117,14 @@ class CmdSender:
             except:
                 pass
 
-    # func for extracting weeder weeder_speed and position
+    # func for extracting weeder weeder_speed and position, in m/s and m
     def extract_speed_and_pos(self, speed_comma_pos):
         speed_dm_str, pos_str = speed_comma_pos.split(',')
 
         speed = float(speed_dm_str)/10.0
         if pos_str[-1] == '\n':
             pos_str = pos_str[:-1]
-        pos = float(pos_str)
+        pos = float(pos_str)/1000.0
 
         return speed, pos
 

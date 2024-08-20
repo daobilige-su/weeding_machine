@@ -28,6 +28,8 @@ lane_det:
 
 weeder:
   def_speed: 0.5 # default weeder speed, m/s
+  def_pos: 0.0 # default weeder position, m  # TODO
+  weeder_cmd_delay: 1  # TODO
   cmd_buffer_size: 35 # weeder cmd buffer
   cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ctrl_p: 0.5 # proportional gain for P controller

@@ -188,7 +188,7 @@ class image_processor:
 
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, np.deg2rad(-20), np.deg2rad(20))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None
         lines2d = lines.reshape((lines.shape[0], lines.shape[2]))
         lines2d[lines2d[:, 0]<0, 1] = ((lines2d[lines2d[:, 0]<0, 1]+np.pi) + np.pi) % (2*np.pi) - np.pi # wrap to pi
@@ -204,14 +204,14 @@ class image_processor:
                     idx = idx+1
             lines_theta = thetas[0:idx]
             if idx == 0:
-                rospy.logwarn('detect_lanes: not enough middle lines detected.')
+                rospy.logwarn('detect_lanes: not enough middle lane_det_lines detected.')
                 return None, None
 
         theta = np.mean(lines_theta)
 
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), 10, None, 0, 0, theta, theta+np.deg2rad(1))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 

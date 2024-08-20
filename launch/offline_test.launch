@@ -2,13 +2,13 @@
     <param name="param_file" type="str" value="$(find weeding_machine)/cfg/param_offline.yaml" />
 
     <!--   rviz -->
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/main.rviz"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/main_2.rviz"/>
 
     <!--     tf_manager -->
     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/>
 
     <!--     lane_det -->
-    <node pkg="weeding_machine" type="lane_det.py" name="lane_det" output="screen"/>
+    <node pkg="weeding_machine" type="lane_det_gaus.py" name="lane_det_gaus" output="screen"/>
 
 <!--     <node pkg="rosbag" type="play" name="play_file1" output="screen" args="-r 0.2 /home/zhong/my_workspace/src/bag/9.bag"> -->
 <!--     <param name="start_paused" value="false"/> -->

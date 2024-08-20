@@ -210,10 +210,10 @@ class image_processor:
         self.det_img_pub.publish(det_image)
 
         # (2) detect lanes
-        # extract lines with the two step hough transform method
+        # extract lane_det_lines with the two step hough transform method
         lines, plant_seg_lines = self.detect_lanes(plant_seg)
         if lines is None:
-            rospy.logwarn('no lines are detected, skipping this image and returning ...')
+            rospy.logwarn('no lane_det_lines are detected, skipping this image and returning ...')
             return
 
         # publish line detection results
@@ -265,7 +265,7 @@ class image_processor:
     # (1) convert the perspective image to the bird eye image.
     # (2) use hough transform to estimate the theta angle by averaging top 10 thetas
     # (3) estimate r of line again with hough transform, by fixing the theta angle
-    # (4) merge nearby lines and compute v coordinates of lines with max u coordinates
+    # (4) merge nearby lane_det_lines and compute v coordinates of lane_det_lines with max u coordinates
     def detect_lanes(self, plant_seg):
 
         # choose proper params
@@ -301,7 +301,7 @@ class image_processor:
                                np.deg2rad(self.param['lane_det']['hough_theta_range'][0]),
                                np.deg2rad(self.param['lane_det']['hough_theta_range'][1]))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None
 
         # lines2d [[r1, r2, ...], [theta1, theta2, ...]]
@@ -310,7 +310,7 @@ class image_processor:
         lines2d[lines2d[:, 0] < 0, 1] = ((lines2d[lines2d[:, 0] < 0, 1] + np.pi) + np.pi) % (
                     2 * np.pi) - np.pi  # wrap to pi
         lines2d[lines2d[:, 0] < 0, 0] = -lines2d[lines2d[:, 0] < 0, 0]
-        # extract the top 10 lines
+        # extract the top 10 lane_det_lines
         lines_theta = lines2d[0:10, 1]
         lines_r = lines2d[0:10, 0]
 
@@ -325,7 +325,7 @@ class image_processor:
                 idx = idx + 1
         lines_theta = thetas[0:idx]
         if idx == 0:
-            rospy.logwarn('detect_lanes: not enough middle lines detected.')
+            rospy.logwarn('detect_lanes: not enough middle lane_det_lines detected.')
             return None, None
         theta = np.mean(lines_theta)
 
@@ -333,11 +333,11 @@ class image_processor:
         lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), self.param['lane_det']['hough_hist_thr'], None, 0, 0, \
                                theta, theta + np.deg2rad(1))
         if lines is None:
-            rospy.logwarn('HoughLines: no lines are detected.')
+            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
             return None, None
         lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
 
-        # combine detected lines close to half lane width
+        # combine detected lane_det_lines close to half lane width
         r_thr = self.max_lane_width * 0.5 / self.bird_pixel_size
         # order r in ascending order, r can be both positive or negative now
         lines_r_asc = np.sort(lines_r)
@@ -396,7 +396,7 @@ class image_processor:
         return lines_x_theta, bird_eye_view_lines
 
     # compute weeder's absolute position shift based on the detected lane params.
-    # lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
+    # lane_det_lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
     # where x1, x2, ... are u coordinates of intersections of lanes with the bottom of the image
     def control_weeder(self, lines):
         # compute lanes' closest y coords in the weeder frame from their u coordinates of intersections of lanes with
