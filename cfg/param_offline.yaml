@@ -1,3 +1,5 @@
+verbose: 0
+
 cam:
   cam_to_use: 0 # -1: undetermined, 0: left, 1: right
   cam_sel_time_interval: 100000 # how long time in second is need to operate camera re-selection again.
@@ -17,16 +19,8 @@ cam:
     T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
 
 lane_det:
-  verbose: 0
   yolo_plant_id: 1
-  yolo_model: best.pt
-  bird_pixel_size: 0.01 # pixel size of bird eye view image, in meter
-  max_lane_width: 0.8 # maximum lane width, in meter  这个要修改
-#  bird_roi: [2.0, -2.0, 5.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
-  bird_roi: [2.0, -2.0, 3.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
-  hough_theta_range: [-20, 20] # theta ranges to search for during the 1st hough transform, in degree
-  hough_hist_thr: 10 # the minimum hough transform histogram value
-  hough_theta_sel_r_range: [-2, 2] #
+  yolo_model: best_offline21.pt
 
 weeder:
   def_speed: 0.5 # default weeder speed, m/s
@@ -45,6 +39,9 @@ weeder:
   hardware_interaction: 1 # whether weeder mic is connected, enable serial, otherwise not
   verbose: 1
   weeder_cmd_delay: 0
+
+log:
+  enable: 1
 
 tf:
   Tlwlc: [1.619993, -0.000001, 0.650002, -0.653281, 0.653281, -0.270598, 0.270598] # t+quat, left cam in left weeder

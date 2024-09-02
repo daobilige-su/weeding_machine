@@ -6,7 +6,7 @@ import sys
 import scipy.ndimage
 import tf
 from sensor_msgs.msg import PointCloud2, Image, CameraInfo
-from std_msgs.msg import Float32MultiArray, Float32
+from std_msgs.msg import Float32MultiArray, Float32, String
 
 import ros_numpy
 from transform_tools import *
@@ -28,7 +28,7 @@ import yaml
 import time
 import ctypes
 
-# mpl.use('TkAgg')
+mpl.use('TkAgg')
 # plt.imshow(image_seg_bn, cmap='gray')
 # plt.show()
 
@@ -42,11 +42,8 @@ class image_processor:
         params_filename = rospy.get_param('param_file')  # self.pkg_path + 'cfg/' + 'param.yaml'
         with open(params_filename, 'r') as file:
             self.param = yaml.safe_load(file)
-        self.verbose = self.param['lane_det']['verbose']
+        self.verbose = self.param['verbose']
         self.img_size = np.array([self.param['cam']['height'], self.param['cam']['width']])
-        self.bird_pixel_size = self.param['lane_det']['bird_pixel_size']
-        self.max_lane_width = self.param['lane_det']['max_lane_width']
-        self.bird_roi_m = self.param['lane_det']['bird_roi']  # in weeder base_link coord, [y_max, y_min, x_max, x_min]
 
         # yolo5 detection
         self.yolo5_plant_id = self.param['lane_det']['yolo_plant_id']
@@ -68,72 +65,61 @@ class image_processor:
         self.right_img_sub = rospy.Subscriber(self.param['cam']['right']['topic'], Image, self.right_img_cb, queue_size=1)
         self.proc_img_pub = rospy.Publisher('/proc_img/image_raw', Image, queue_size=2)
         self.seg_img_pub = rospy.Publisher('/seg_img/image_raw', Image, queue_size=2)
-        self.line_img_pub = rospy.Publisher('/line_img/image_raw', Image, queue_size=2)
-        self.det_img_left_pub = rospy.Publisher('/det_img/image_raw_left', Image, queue_size=2)
-        self.det_img_right_pub = rospy.Publisher('/det_img/image_raw_right', Image, queue_size=2)
-        self.line_rgb_left_pub = rospy.Publisher('/line_rgb/iamge_raw_left', Image, queue_size=2)
-        self.line_rgb_right_pub = rospy.Publisher('/line_rgb/iamge_raw_right', Image, queue_size=2)
-
-        # weeder pub, sub and vars
-        self.weeder_speed = self.param['weeder']['def_speed']
-        self.weeder_pos = self.param['weeder']['def_pos']  # TODO
-        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
-        self.weeder_speed_pos_sub = rospy.Subscriber('/weeder_speed_pos', Float32MultiArray, self.weeder_speed_pos_cb)  # TODO
-        self.mid_line_y = None
-        self.control_bias = self.param['weeder']['ctrl_bias']
-        self.weeder_y = 0
-        self.mid_y_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
-        self.weeder_pos_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))  # TODO
-        self.ctl_time_pre = -1
-        self.ctl_cmd = 0
-        self.weeder_cmd_delay = self.param['weeder']['weeder_cmd_delay']  # TODO
-
+        # self.det_img_left_pub = rospy.Publisher('/det_img/image_raw_left', Image, queue_size=2)
+        # self.det_img_right_pub = rospy.Publisher('/det_img/image_raw_right', Image, queue_size=2)
+        self.det_img_pub = rospy.Publisher('/det_img/image_raw', Image, queue_size=2)
+        self.seg_line_pub = rospy.Publisher('/seg_line/image_raw', Image, queue_size=2)
+        # self.line_rgb_left_pub = rospy.Publisher('/line_rgb/image_raw_left', Image, queue_size=2)
+        # self.line_rgb_right_pub = rospy.Publisher('/line_rgb/image_raw_right', Image, queue_size=2)
+        self.rgb_line_pub = rospy.Publisher('/rgb_line/image_raw', Image, queue_size=2)
         # get camera intrinsic
         self.left_cam_K = np.array(self.param['cam']['left']['K']).reshape((3, 3))
         self.right_cam_K = np.array(self.param['cam']['right']['K']).reshape((3, 3))
         # get camera extrinsic
         self.left_cam_T = transform_trans_ypr_to_matrix(np.array(self.param['cam']['left']['T']).reshape((6, 1)))
         self.right_cam_T = transform_trans_ypr_to_matrix(np.array(self.param['cam']['right']['T']).reshape((6, 1)))
-        # camera homography
-        self.left_bird_img_size = None
-        self.right_bird_img_size = None
-        self.left_cam_H = None
-        self.right_cam_H = None
-        # computes self.left_bird_img_size, self.right_bird_img_size, self.left_cam_H, self.right_cam_H
-        # Note that left_bird_img_size and right_bird_img_size is in the order of (u,v), not (v,u) in image!!
-        self.left_bird_img_size, self.left_cam_H = self.compute_homography(self.left_cam_K, self.left_cam_T)
-        self.right_bird_img_size, self.right_cam_H = self.compute_homography(self.right_cam_K, self.right_cam_T)
-        # bird eye view roi in meter to that in percentage
-        self.left_bird_roi_perc = [
-            (-self.bird_roi_m[0] / self.bird_pixel_size + self.left_bird_img_size[0] / 2.0) / self.left_bird_img_size[
-                0],
-            (-self.bird_roi_m[1] / self.bird_pixel_size + self.left_bird_img_size[0] / 2.0) / self.left_bird_img_size[
-                0],
-            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.left_bird_img_size[1]),
-            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.left_bird_img_size[1])]
-        self.right_bird_roi_perc = [
-            (-self.bird_roi_m[0] / self.bird_pixel_size + self.right_bird_img_size[0] / 2.0) / self.right_bird_img_size[
-                0],
-            (-self.bird_roi_m[1] / self.bird_pixel_size + self.right_bird_img_size[0] / 2.0) / self.right_bird_img_size[
-                0],
-            1 - ((self.bird_roi_m[2] / self.bird_pixel_size) / self.right_bird_img_size[1]),
-            1 - ((self.bird_roi_m[3] / self.bird_pixel_size) / self.right_bird_img_size[1])]
-        # cpp function call
-        self.cfunc_handle = ctypes.CDLL(self.pkg_path + "libGrayScaleHoughLine.so")
+
+        # lane det params
+        self.wrap_param = np.array([120, 225, 180, 0, 220, 250])
+        self.wrap_img_size = np.array(
+            [int(self.wrap_param[4] - self.wrap_param[3] + 1), int(2 * (self.wrap_param[1] - self.wrap_param[0]))])
+        h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
+        if h_shift > 0:
+            inputpts = np.float32(
+                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],
+                 [0, 0]])
+            outputpts = np.float32(
+                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
+        else:
+            inputpts = np.float32(
+                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
+            outputpts = np.float32(
+                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],
+                 [0, 0]])
+        self.wrap_H = cv2.getPerspectiveTransform(inputpts, outputpts)
+
+        self.cfunc_handle = ctypes.CDLL(self.pkg_path + "libGrayScaleHoughLine.so") # cpp function call
         self.lane_det_track_img = None
         self.lane_det_track_u = None
         self.lane_det_lines = None
 
-        self.wrap_param = np.array([120, 225, 180, 0, 220, 250])
-        self.wrap_img_size = np.array([int(self.wrap_param[4]-self.wrap_param[3]+1), int(2*(self.wrap_param[1]-self.wrap_param[0]))])
-        h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
-        if h_shift > 0:
-            inputpts = np.float32([[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],[0, 0]])
-            outputpts = np.float32([[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
-        else:
-            inputpts = np.float32([[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
-            outputpts = np.float32([[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],[0, 0]])
-        self.wrap_H = cv2.getPerspectiveTransform(inputpts, outputpts)
+        # weeder pub, sub and vars
+        self.weeder_speed = self.param['weeder']['def_speed']
+        self.weeder_pos = self.param['weeder']['def_pos']
+        self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
+        self.weeder_speed_pos_sub = rospy.Subscriber('/weeder_speed_pos', Float32MultiArray, self.weeder_speed_pos_cb)
+        self.mid_line_y = None
+        self.control_bias = self.param['weeder']['ctrl_bias']
+        self.weeder_y = 0
+        self.mid_y_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
+        self.weeder_pos_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
+        self.ctl_time_pre = -1
+        self.ctl_cmd = 0
+        self.weeder_cmd_delay = self.param['weeder']['weeder_cmd_delay']
+
+        # logging
+        self.log_on = self.param['log']['enable']
+        self.log_msg_pub = rospy.Publisher('/log_msg', String, queue_size=2)
 
         return
 
@@ -207,14 +193,25 @@ class image_processor:
 
     # the main loop: detect line and send back the result
     def img_cb(self):
-        t0 = time.time()
-        # print('t1 = %f' % (t1-t0))
+        log_msg = String()
+        t0 = rospy.get_time()
+        if self.log_on:
+            log_msg.data = str(t0) + ': start processing a new image'
+            self.log_msg_pub.publish(log_msg)
 
-        #choose camera in each 0.5s
+        # (0) choose camera in each cam_sel_time_interval time
         choose_cam_cur_time = rospy.get_time()
         if choose_cam_cur_time - self.choose_cam_pre_time >= self.cam_sel_time_interval:
             self.select_cam()
             self.choose_cam_pre_time = rospy.get_time()
+
+            t01 = rospy.get_time()
+            if self.log_on:
+                log_msg.data = str(t01) + ': finished camera selection process'
+                self.log_msg_pub.publish(log_msg)
+
+        # TODO: log continue
+
         # select left or right camera image for lane detection
         if self.cam_to_use == 0:
             cv_image = self.left_img
@@ -254,10 +251,11 @@ class image_processor:
             print(e)
             return
         self.seg_img_pub.publish(ros_image)
-        if self.cam_to_use==0:
-            self.det_img_left_pub.publish(det_image)
-        elif self.cam_to_use==1:
-            self.det_img_right_pub.publish(det_image)
+        # if self.cam_to_use==0:
+        #     self.det_img_left_pub.publish(det_image)
+        # elif self.cam_to_use==1:
+        #     self.det_img_right_pub.publish(det_image)
+        self.det_img_pub.publish(det_image)
 
         t1 = time.time()
         print('t1 = %f' % (t1 - t0))
@@ -276,11 +274,12 @@ class image_processor:
             rgb_lines = self.bridge.cv2_to_imgmsg(rgb_lines, "bgr8")
         except CvBridgeError as e:
             print(e)
-        self.line_img_pub.publish(ros_image)
-        if self.cam_to_use == 0:
-            self.line_rgb_left_pub.publish(rgb_lines)
-        elif self.cam_to_use==1:
-            self.line_rgb_right_pub.publish(rgb_lines)
+        self.seg_line_pub.publish(ros_image)
+        # if self.cam_to_use == 0:
+        #     self.line_rgb_left_pub.publish(rgb_lines)
+        # elif self.cam_to_use==1:
+        #     self.line_rgb_right_pub.publish(rgb_lines)
+        self.rgb_line_pub.publish(rgb_lines)
 
         t2 = time.time()
         print('t2 = %f' % (t2 - t0))

@@ -6,6 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /RawImage1
+        - /SegImage1
       Splitter Ratio: 0.5
     Tree Height: 70
   - Class: rviz/Selection
@@ -53,7 +55,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /line_rgb/iamge_raw_left
+      Image Topic: /rgb_line/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -65,7 +67,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /line_img/image_raw
+      Image Topic: /seg_line/image_raw
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -143,5 +145,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 1989
-  Y: 656
+  X: 2049
+  Y: 44
