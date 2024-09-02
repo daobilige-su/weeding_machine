@@ -10,6 +10,10 @@
     <!--     lane_det -->
     <node pkg="weeding_machine" type="lane_det_gaus.py" name="lane_det_gaus" output="screen"/>
 
+    <node pkg="weeding_machine" type="pyqt_show.py" name="ros_gui" output="screen" > -->
+        <param name="image_topic1"       value="/front_rgb_cam/image_raw" />
+    </node>
+
 <!--     <node pkg="rosbag" type="play" name="play_file1" output="screen" args="-r 0.2 /home/zhong/my_workspace/src/bag/9.bag"> -->
 <!--     <param name="start_paused" value="false"/> -->
 <!--     </node> -->

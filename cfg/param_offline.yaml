@@ -5,11 +5,12 @@ cam:
   width: 320
   height: 240
   left:
-    topic: /camera/image_raw
+    topic: /usb_cam1/image_raw
+#    topic: /camera/image_raw
 #    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
 #    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
-    T: [0, 0, -0.74, 0, 0, 0.9424778] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
+    T: [0, 0, -0.65, -0.03490659, 0, 0.9424778] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
   right:
     topic: /right_rgb_cam/image_raw
     K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
@@ -18,32 +19,32 @@ cam:
 lane_det:
   verbose: 0
   yolo_plant_id: 1
-  yolo_model: best_offline.pt
+  yolo_model: best.pt
   bird_pixel_size: 0.01 # pixel size of bird eye view image, in meter
-  max_lane_width: 0.5 # maximum lane width, in meter
+  max_lane_width: 0.8 # maximum lane width, in meter  这个要修改
 #  bird_roi: [2.0, -2.0, 5.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
   bird_roi: [2.0, -2.0, 3.0, 0.0] # in weeder base_link coord, [y_max, y_min, x_max, x_min]
   hough_theta_range: [-20, 20] # theta ranges to search for during the 1st hough transform, in degree
-  hough_hist_thr: 15 # the minimum hough transform histogram value
+  hough_hist_thr: 10 # the minimum hough transform histogram value
   hough_theta_sel_r_range: [-2, 2] #
 
 weeder:
   def_speed: 0.5 # default weeder speed, m/s
-  def_pos: 0.0 # default weeder position, m  # TODO
-  weeder_cmd_delay: 0  # TODO
-  cmd_buffer_size: 16 # weeder cmd buffer
+  def_pos: 0.0
+  cmd_buffer_size: 35 # weeder cmd buffer
   cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ctrl_p: 0.5 # proportional gain for P controller
   ctrl_u_min: 0.01 # the minimum control cmd in meter
   ctrl_bias: 0.0 # how much bias should be added to weeder control in weeding Y coord
-  ser_port: /dev/ttyUSB0 # serial port for weeder mic
+  ser_port: /dev/ttyS0 # serial port for weeder mic
   baudrate: 115200
   bytesize: 8  # len
   stopbits: 1
   parity: N
   mic_response_time: 0.1 # after weeder control cmd is send, how long it should wait for weeder mic to respond
-  hardware_interaction: 0 # whether weeder mic is connected, enable serial, otherwise not
-  verbose: 0
+  hardware_interaction: 1 # whether weeder mic is connected, enable serial, otherwise not
+  verbose: 1
+  weeder_cmd_delay: 0
 
 tf:
   Tlwlc: [1.619993, -0.000001, 0.650002, -0.653281, 0.653281, -0.270598, 0.270598] # t+quat, left cam in left weeder

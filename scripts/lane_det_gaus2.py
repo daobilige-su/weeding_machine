@@ -120,7 +120,7 @@ class image_processor:
         self.lane_det_track_u = None
         self.lane_det_lines = None
 
-        self.wrap_param = np.array([120, 225, 180, 0, 220, 250])
+        self.wrap_param = np.array([110, 225, 180, 0, 220, 250])
         self.wrap_img_size = np.array([int(self.wrap_param[4]-self.wrap_param[3]+1), int(2*(self.wrap_param[1]-self.wrap_param[0]))])
         h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
         if h_shift > 0:
@@ -135,8 +135,10 @@ class image_processor:
 
     # TODO, sub for weeder weeder speed and pos, simply store it in member var
     def weeder_speed_pos_cb(self, msg):
+        print("ddddddgggggggggggggggggggggggggggggggg")
         self.weeder_speed = msg.data[0]
         self.weeder_pos = msg.data[1]
+
 
     # sub for left cam img, store it in member var and call line detection if left cam is selected.
     def left_img_cb(self, msg):
@@ -790,37 +792,34 @@ class image_processor:
         lane_y_offset = -lane_u_offset*(0.4/(lines_u_d[1]-lines_u_d[0]))
 
         mid_y = lane_y_offset + self.weeder_pos/1000
-
+        # mid_y = lane_y_offset
+        #weeder_distance
         # after a fixed distance, send weeder control cmd
         if self.ctl_time_pre == -1:
             self.ctl_time_pre = rospy.get_time()
         cur_time = rospy.get_time()
-        self.weeder_speed = 10
-        if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
-            step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
-            for step in range(step_num):  # TODO
-                self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()  # TODO
-                self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y  # TODO
-                self.weeder_pos_buff[0:self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos_buff[1:self.weeder_pos_buff.shape[0]].copy()  # TODO
-                self.weeder_pos_buff[self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos  # TODO
+        # if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
+        step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
+        for step in range(step_num):  # TODO
+            self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()  # TODO
+            self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y  # TODO
+            self.weeder_pos_buff[0:self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos_buff[1:self.weeder_pos_buff.shape[0]].copy()  # TODO
+            self.weeder_pos_buff[self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos  # TODO
 
-            self.ctl_time_pre = cur_time
-
-            # self.weeder_y = self.mid_y_buff[0]  # extract the earliest position shift
-            if self.weeder_cmd_delay:  # TODO
-                self.weeder_y = self.mid_y_buff[0] + self.weeder_pos_buff[0] - self.weeder_pos  # TODO
-            else:  # TODO
-                self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift  # TODO
-
-            # send the control cmd, i.e. the absolute position shift of the weeder
-            msg = Float32MultiArray()
-            msg.data = [self.weeder_y]
-            self.weeder_control_pub.publish(msg)
-            print('weeder cmd: ' % self.weeder_y)
-            if self.verbose:
-                rospy.loginfo('ctl_cmd = %f \n' % (self.weeder_y))
-        else:
-            return
+        self.ctl_time_pre = cur_time
+        # self.weeder_y = self.mid_y_buff[0]  # extract the earliest position shift
+        if self.weeder_cmd_delay:  # TODO
+            self.weeder_y = self.mid_y_buff[0] + self.weeder_pos_buff[0] - self.weeder_pos  # TODO
+        else:  # TODO
+            self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift  # TODO
+        # send the control cmd, i.e. the absolute position shift of the weeder
+        msg = Float32MultiArray()
+        msg.data = [self.weeder_y]
+        self.weeder_control_pub.publish(msg)
+        if self.verbose:
+            rospy.loginfo('ctl_cmd = %f \n' % (self.weeder_y))
+        # else:
+        #     return
 
         pass
 

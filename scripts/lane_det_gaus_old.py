@@ -120,7 +120,7 @@ class image_processor:
         self.lane_det_track_u = None
         self.lane_det_lines = None
 
-        self.wrap_param = np.array([120, 225, 180, 0, 220, 250])
+        self.wrap_param = np.array([180, 319, 200, 0, 239, 250])
         self.wrap_img_size = np.array([int(self.wrap_param[4]-self.wrap_param[3]+1), int(2*(self.wrap_param[1]-self.wrap_param[0]))])
         h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
         if h_shift > 0:
@@ -789,13 +789,12 @@ class image_processor:
 
         lane_y_offset = -lane_u_offset*(0.4/(lines_u_d[1]-lines_u_d[0]))
 
-        mid_y = lane_y_offset + self.weeder_pos/1000
+        mid_y = lane_y_offset
 
         # after a fixed distance, send weeder control cmd
         if self.ctl_time_pre == -1:
             self.ctl_time_pre = rospy.get_time()
         cur_time = rospy.get_time()
-        self.weeder_speed = 10
         if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
             step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
             for step in range(step_num):  # TODO
