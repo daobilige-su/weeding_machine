@@ -24,7 +24,7 @@ def CreateVideoBag(videopath, bagname):
         ret, frame = cap.read()
         if not ret:
             break
-        stamp = rospy.Time.from_sec(time.time())
+        stamp = rospy.rostime.Time.from_sec(float(frame_id) / prop_fps)
         frame_id += 1
         image = cb.cv2_to_imgmsg(frame, "bgr8")
         image.header.stamp = stamp

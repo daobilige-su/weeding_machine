@@ -28,6 +28,10 @@ import yaml
 import time
 import ctypes
 
+# mpl.use('TkAgg')
+# plt.imshow(image_seg_bn, cmap='gray')
+# plt.show()
+
 class image_processor:
     def __init__(self):
         # locate ros pkg
@@ -133,7 +137,7 @@ class image_processor:
 
         return
 
-    # TODO, sub for weeder weeder speed and pos, simply store it in member var
+    # sub for weeder weeder speed and pos, simply store it in member var
     def weeder_speed_pos_cb(self, msg):
         self.weeder_speed = msg.data[0]
         self.weeder_pos = msg.data[1]
@@ -294,55 +298,6 @@ class image_processor:
         return
 
     # segment plants using yolov5, return a binary image with plant area (1) and everything else (0)
-    # def segment_plants_yolo5(self, np_image):
-    #     det_image = np_image.copy()
-    #     image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
-    #
-    #     # detection
-    #     t0 = time.time()
-    #     results = self.model(image_rgb)
-    #     t1 = time.time()
-    #     print('yolo t: %f' % (t1-t0))
-    #
-    #     # create a binary image for segmentation result
-    #     image_seg_bn = np.zeros((image_rgb.shape[0], image_rgb.shape[1]))
-    #
-    #     # extract bbox coords, only select id=0, i.e. plants
-    #     bboxes = results.xyxy[0].cpu().numpy()
-    #
-    #     # gaussian blob img
-    #     bboxes_num = bboxes.shape[0]
-    #     gaus_det = np.zeros((self.img_size[0], self.img_size[1], bboxes_num))
-    #     x, y = np.mgrid[0:self.img_size[0], 0:self.img_size[1]]
-    #     gaus_layer_idx = np.dstack((x, y))
-    #
-    #     # convert bbox based object detection results to segmentation result, e.g. either draw rectangles or circles
-    #     bboxes_idx = 0
-    #     for bbox in bboxes:
-    #         x1, y1, x2, y2, conf, cls = bbox
-    #         if int(cls) == 0 and conf > 0.4 and y2 - y1 < 15 and x2 - x1 < 15:  # only select id=0, i.e. plants
-    #             cv2.rectangle(det_image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 255, 255), 2)
-    #         if int(cls) == self.yolo5_plant_id:  # only select id=0, i.e. plants
-    #             # image_seg_bn = cv2.rectangle(image_seg_bn, (int(x1), int(y1)), (int(x2), int(y2)), 1, -1) # draw rect
-    #             image_seg_bn = cv2.circle(image_seg_bn, (int((x1 + x2) / 2.0), int((y1 + y2) / 2.0)),
-    #                                       int(np.min(np.array([x2 - x1, y2 - y1]) / 2.0)), 1, -1)  # draw circle
-    #             cv2.rectangle(det_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
-    #
-    #             gaus_pdf = multivariate_normal([(y1 + y2) / 2.0, (x1 + x2) / 2.0], [[(0.6*(y2-y1))**2, 0], [0, (0.6*(x2-x1))**2]])
-    #             gaus_layer = gaus_pdf.pdf(gaus_layer_idx)
-    #             gaus_layer = gaus_layer*(1.0/np.max(gaus_layer))
-    #
-    #             gaus_det[:, :, bboxes_idx] = gaus_layer.copy()
-    #             bboxes_idx = bboxes_idx+1
-    #
-    #     # gaussian blob image
-    #     img_seg_gaus = np.max(gaus_det, axis=2)
-    #     # img_seg_gaus = np.sum(gaus_det, axis=2)
-    #     img_seg_gaus = img_seg_gaus*(255.0/np.max(img_seg_gaus))
-    #     img_seg_gaus = img_seg_gaus.astype(np.uint8)
-    #
-    #     # return seg result, i.e. a binary image
-    #     return image_seg_bn, det_image, img_seg_gaus
     def segment_plants_yolo5(self, np_image):
         det_image = np_image.copy()
         image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
@@ -388,36 +343,6 @@ class image_processor:
         return image_seg_bn, det_image, img_seg_ma
 
     def detect_lanes_gaus(self, plant_seg_guas, cv_image):
-        # lane_det_lines = cv2.HoughLines(plant_seg_guas, 50, np.deg2rad(1), self.param['lane_det']['hough_hist_thr'], None, 0, 0,
-        #                        np.deg2rad(self.param['lane_det']['hough_theta_range'][0]),
-        #                        np.deg2rad(self.param['lane_det']['hough_theta_range'][1]))
-        #
-        # plant_seg_guas_lines = np.stack((plant_seg_guas,) * 3, axis=-1)
-        #
-        # lines2d = lane_det_lines.reshape((lane_det_lines.shape[0], lane_det_lines.shape[2]))
-        #
-        # for i in range(lines2d.shape[0]):
-        #     rho = lines2d[i, 0]
-        #     theta = lines2d[i, 1]
-        #     a = math.cos(theta)
-        #     b = math.sin(theta)
-        #     x0 = a * rho
-        #     y0 = b * rho
-        #     pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
-        #     pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-        #     cv2.line(plant_seg_guas_lines, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
-        #     pt_edge_x = (rho - plant_seg_guas.shape[0] * b) / a
-        #     # lines_x_theta[0, i] = pt_edge_x
-        #     cv2.circle(plant_seg_guas_lines, (int(plant_seg_guas_lines.shape[1] / 2.0), plant_seg_guas_lines.shape[0]), 5,
-        #                (255, 0, 0), 1)
-        #     cv2.circle(plant_seg_guas_lines, (int(pt_edge_x), plant_seg_guas_lines.shape[0]), 5, (0, 0, 255), 1)
-        #
-        #     mpl.use('TkAgg')
-        #     plt.imshow(plant_seg_guas_lines)
-        #     plt.show()
-        # t0 = time.time()
-
-        # plant_seg_guas_lines = np.stack(((plant_seg_guas * (255.0 / np.max(plant_seg_guas))).astype(np.uint8),) * 3, axis=-1)
 
         wrap_param = self.wrap_param
         wrap_H = self.wrap_H
@@ -574,208 +499,6 @@ class image_processor:
         self.lane_det_track_u = self.lane_det_lines[0, :]
 
         return lines, plant_seg_guas_lines, cv_image_lines
-
-    # detect farm lanes based on the plant segmentation image
-    # (1) convert the perspective image to the bird eye image.
-    # (2) use hough transform to estimate the theta angle by averaging top 10 thetas
-    # (3) estimate r of line again with hough transform, by fixing the theta angle
-    # (4) merge nearby lane_det_lines and compute v coordinates of lane_det_lines with max u coordinates
-    def detect_lanes(self, plant_seg, cv_image):
-
-        # choose proper params
-        if self.cam_to_use == 0:
-            cam_H = self.left_cam_H
-            bird_img_size = self.left_bird_img_size
-            bird_roi_perc = self.left_bird_roi_perc
-        elif self.cam_to_use == 1:
-            cam_H = self.right_cam_H
-            bird_img_size = self.right_bird_img_size
-            bird_roi_perc = self.right_bird_roi_perc
-        else:
-            rospy.logwarn('lane_det: unknown camera selection.')
-            return
-
-        # change binary image to
-
-        plant_seg_rgb = np.asarray((plant_seg * 255).astype(np.uint8))
-
-        # convert perspective image to the bird eye view image using camera homography matrix
-        bird_eye_view_raw = cv2.warpPerspective(plant_seg_rgb, cam_H,
-                                                (int(bird_img_size[0]), int(bird_img_size[1])), flags=cv2.INTER_NEAREST)
-        bird_eye_view_rgb = cv2.warpPerspective(cv_image, cam_H,
-                                                (int(bird_img_size[0]), int(bird_img_size[1])), flags=cv2.INTER_NEAREST)
-
-        # only keep plants in roi
-        detect_roi = bird_roi_perc  # u_min, u_max, v_min, v_max, in percentage
-        bird_eye_view = bird_eye_view_raw.copy()
-        bird_eye_view[:, :int(detect_roi[0] * bird_eye_view.shape[1])] = 0
-        bird_eye_view[:, int(detect_roi[1] * bird_eye_view.shape[1]):] = 0
-        bird_eye_view[:int(detect_roi[2] * bird_eye_view.shape[0]), :] = 0
-        bird_eye_view[int(detect_roi[3] * bird_eye_view.shape[0]):, :] = 0
-
-        # 1st hough transform,
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), self.param['lane_det']['hough_hist_thr'], None, 0, 0,
-                               np.deg2rad(self.param['lane_det']['hough_theta_range'][0]),
-                               np.deg2rad(self.param['lane_det']['hough_theta_range'][1]))
-        if lines is None:
-            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
-            return None, None, None
-
-        # lines2d [[r1, r2, ...], [theta1, theta2, ...]]
-        lines2d = lines.reshape((lines.shape[0], lines.shape[2]))
-        # for those r<0, change its theta to theta+pi, so its r can be positive
-        lines2d[lines2d[:, 0] < 0, 1] = ((lines2d[lines2d[:, 0] < 0, 1] + np.pi) + np.pi) % (
-                    2 * np.pi) - np.pi  # wrap to pi
-        lines2d[lines2d[:, 0] < 0, 0] = -lines2d[lines2d[:, 0] < 0, 0]
-        # extract the top 10 lane_det_lines
-        lines_theta = lines2d[0:10, 1]
-        lines_r = lines2d[0:10, 0]
-
-        # get the average theta whose r is within a range around the middle line+
-        thetas = np.zeros((10,))
-        idx = 0
-        for i in range(lines_theta.shape[0]):
-            if (self.param['lane_det']['hough_theta_sel_r_range'][0]/self.bird_pixel_size + bird_eye_view.shape[1]/2.0) \
-                    < lines_r[i] < \
-                    (self.param['lane_det']['hough_theta_sel_r_range'][1]/self.bird_pixel_size + bird_eye_view.shape[1]/2.0):
-                thetas[idx] = lines_theta[i]
-                idx = idx + 1
-        lines_theta = thetas[0:idx]
-        if idx == 0:
-            rospy.logwarn('detect_lanes: not enough middle lane_det_lines detected.')
-            return None, None, None
-        theta = np.mean(lines_theta)
-
-        # 2nd hough transform, fix the theta and find the r
-        lines = cv2.HoughLines(bird_eye_view, 1, np.deg2rad(1), self.param['lane_det']['hough_hist_thr'], None, 0, 0, \
-                               theta, theta + np.deg2rad(1))
-        if lines is None:
-            rospy.logwarn('HoughLines: no lane_det_lines are detected.')
-            return None, None, None
-        lines_r = lines.reshape((lines.shape[0], lines.shape[2]))[:, 0]
-
-        # combine detected lane_det_lines close to half lane width
-        r_thr = self.max_lane_width * 0.5 / self.bird_pixel_size
-        # order r in ascending order, r can be both positive or negative now
-        lines_r_asc = np.sort(lines_r)
-        # prepare var to save the combined lane params (r, theta)
-        lines_r_sel = np.zeros((2, lines_r_asc.shape[0]))
-        lines_r_sel[1, :] = theta
-        # loop around and lanes and combine lanes close to each other, and average their r
-        idx = 0
-        n = 0
-        for i in range(lines_r_asc.shape[0]):
-            r = lines_r_asc[i]
-            if i == 0:
-                lines_r_sel[0, idx] = r
-                n = 1
-            else:
-                if abs(r - lines_r_asc[i - 1]) < r_thr:
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx] + r
-                    n = n + 1
-                else:
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx] / n
-
-                    idx = idx + 1
-                    lines_r_sel[0, idx] = lines_r_sel[0, idx] + r
-                    n = 1
-        # don't forget the average the r of the last combined lane
-        lines_r_sel[0, idx] = lines_r_sel[0, idx] / n
-        # finish extracting all lanes
-        lines_r_sel = lines_r_sel[:, 0:idx + 1]
-
-        # prepare var of bird eye image with lanes for plotting, change the image from [height, width] to
-        # [height, width, channel]
-        bird_eye_view_lines = np.stack((bird_eye_view,) * 3, axis=-1)
-        # prepare var of lanes params consist of x (i.e. u) and theta,
-        # x is the intersection of lanes with bottom of image
-        lines_x_theta = None
-        if lines_r_sel is not None:
-            lines_x_theta = lines_r_sel.copy()
-            for i in range(lines_r_sel.shape[1]):
-                rho = lines_r_sel[0, i]
-                theta = lines_r_sel[1, i]
-                a = math.cos(theta)
-                b = math.sin(theta)
-                x0 = a * rho
-                y0 = b * rho
-                pt1 = (int(x0 + 1000 * (-b)), int(y0 + 1000 * (a)))
-                pt2 = (int(x0 - 1000 * (-b)), int(y0 - 1000 * (a)))
-                cv2.line(bird_eye_view_lines, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
-                cv2.line(bird_eye_view_rgb, pt1, pt2, (0, 255, 0), 1, cv2.LINE_AA)
-                pt_edge_x = (rho - bird_eye_view.shape[0] * b) / a
-                lines_x_theta[0, i] = pt_edge_x
-                cv2.circle(bird_eye_view_lines, (int(bird_eye_view.shape[1] / 2.0), bird_eye_view.shape[0]), 5,
-                           (255, 0, 0), 1)
-                cv2.circle(bird_eye_view_lines, (int(pt_edge_x), bird_eye_view.shape[0]), 5, (0, 0, 255), 1)
-
-        # return the lane params, and bird eye image with lanes
-        return lines_x_theta, bird_eye_view_lines , bird_eye_view_rgb
-
-    # compute weeder's absolute position shift based on the detected lane params.
-    # lane_det_lines: 2XN matrix with [[x1, x2, ...],[theta1, theta2, ...]]
-    # where x1, x2, ... are u coordinates of intersections of lanes with the bottom of the image
-    def control_weeder(self, lines):
-        # compute lanes' closest y coords in the weeder frame from their u coordinates of intersections of lanes with
-        # the bottom of the image
-        lines_u_pix = lines[0, :]
-        lines_y = -(lines_u_pix - (self.left_bird_img_size[0] / 2.0)) * self.bird_pixel_size + self.control_bias
-        # make sure there are lane both on left and right sides
-        if (lines_y[lines_y > 0].shape[0] == 0) or (lines_y[lines_y < 0].shape[0] == 0):
-            rospy.logwarn('no lane at left and right side is detected.')
-            return
-
-        # find the closest lanes at the left and right side, extract their y coords
-        pos_idx = np.argmin(abs(lines_y[lines_y > 0] - 0))
-        pos_y = (lines_y[lines_y > 0])[pos_idx]
-        neg_idx = np.argmin(abs(lines_y[lines_y < 0] - 0))
-        neg_y = (lines_y[lines_y < 0])[neg_idx]
-
-        # make sure the closest left and right lanes are within max_lane_width,
-        # if so, find the middle of the two lanes by averaging their y
-        if pos_y < self.max_lane_width and neg_y > -self.max_lane_width:
-            mid_y = (pos_y + neg_y) / 2.0
-        else:
-            rospy.logwarn('lane y exceed the max lane width')
-            return
-
-        # after a fixed distance, send weeder control cmd
-        if self.ctl_time_pre == -1:
-            self.ctl_time_pre = rospy.get_time()
-        cur_time = rospy.get_time()
-        if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
-            step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
-            for step in range(step_num):  # TODO
-                self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()  # TODO
-                self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y  # TODO
-                self.weeder_pos_buff[0:self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos_buff[1:self.weeder_pos_buff.shape[0]].copy()  # TODO
-                self.weeder_pos_buff[self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos  # TODO
-
-            self.ctl_time_pre = cur_time
-
-            # self.weeder_y = self.mid_y_buff[0]  # extract the earliest position shift
-            if self.weeder_cmd_delay:  # TODO
-                self.weeder_y = self.mid_y_buff[0] + self.weeder_pos_buff[0] - self.weeder_pos  # TODO
-            else:  # TODO
-                self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift  # TODO
-
-            # compute the control command u using the classic P controller
-            u = self.weeder_y * self.param['weeder']['ctrl_p']  # p controller
-            if abs(u) < self.param['weeder']['ctrl_u_min']:
-                u = np.sign(u) * self.param['weeder']['ctrl_u_min']
-            # add control cmd u to the previous weeder position
-            self.ctl_cmd = self.ctl_cmd + u
-
-            # send the control cmd, i.e. the absolute position shift of the weeder
-            msg = Float32MultiArray()
-            msg.data = [self.ctl_cmd]
-            self.weeder_control_pub.publish(msg)
-            if self.verbose:
-                rospy.loginfo('ctl_cmd = %f \n' % (self.ctl_cmd))
-        else:
-            return
-
-        pass
 
     def control_weeder_gaus(self, lines):
         wrap_param = self.wrap_param
