@@ -32,7 +32,7 @@ mpl.use('TkAgg')
 # plt.imshow(image_seg_bn, cmap='gray')
 # plt.show()
 
-class image_processor:
+class lane_detector:
     def __init__(self):
         # locate ros pkg
         rospack = rospkg.RosPack()
@@ -80,7 +80,8 @@ class image_processor:
         self.right_cam_T = transform_trans_ypr_to_matrix(np.array(self.param['cam']['right']['T']).reshape((6, 1)))
 
         # lane det params
-        self.wrap_param = np.array([120, 225, 180, 0, 220, 250])
+        self.wrap_img_on = self.param['lane_det']['wrap_img_on']
+        self.wrap_param = np.array(self.param['lane_det']['wrap_param']).reshape((-1,))  # np.array([120, 225, 180, 0, 220, 250])
         self.wrap_img_size = np.array(
             [int(self.wrap_param[4] - self.wrap_param[3] + 1), int(2 * (self.wrap_param[1] - self.wrap_param[0]))])
         h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
@@ -196,7 +197,7 @@ class image_processor:
         log_msg = String()
         t0 = rospy.get_time()
         if self.log_on:
-            log_msg.data = str(t0) + ': start processing a new image'
+            log_msg.data = str(rospy.get_time()) + ': start processing a new image.'
             self.log_msg_pub.publish(log_msg)
 
         # (0) choose camera in each cam_sel_time_interval time
@@ -207,21 +208,29 @@ class image_processor:
 
             t01 = rospy.get_time()
             if self.log_on:
-                log_msg.data = str(t01) + ': finished camera selection process'
+                log_msg.data = str(t01) + ': finished camera selection process.'
                 self.log_msg_pub.publish(log_msg)
-
-        # TODO: log continue
 
         # select left or right camera image for lane detection
         if self.cam_to_use == 0:
             cv_image = self.left_img
+            if self.log_on:
+                log_msg.data = str(rospy.get_time()) + ': using left camera image.'
+                self.log_msg_pub.publish(log_msg)
         elif self.cam_to_use == 1:
             cv_image = self.right_img
+            if self.log_on:
+                log_msg.data = str(rospy.get_time()) + ': using right camera image.'
+                self.log_msg_pub.publish(log_msg)
         else:
             rospy.logwarn('lane_det: unknown camera selection.')
             return
 
         if cv_image is None:
+            if self.log_on:
+                log_msg.data = str(rospy.get_time()) + ': camera image not ready, skipping.'
+                self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.5)
             return
         else:
             # publish image to be processed
@@ -232,15 +241,18 @@ class image_processor:
                 return
             self.proc_img_pub.publish(ros_image)
 
-        t01 = time.time()
-        print('t0 = %f' % (t01-t0))
+        t02 = rospy.get_time()
+        if self.verbose:
+            rospy.loginfo('time consumption until preparing image = %f' % (t02 - t0))
+        if self.log_on:
+            log_msg.data = str(rospy.get_time()) + ': finished preparing image.'
+            self.log_msg_pub.publish(log_msg)
+            log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t02 - t0)
+            self.log_msg_pub.publish(log_msg)
 
         # (1) segment plants in the image
         # segment plants with yolov5
         plant_seg_bn, det_image, plant_seg_gaus = self.segment_plants_yolo5(cv_image)
-
-        t11 = time.time()
-        print('t11 = %f' % (t11 - t0))
 
         # publish segmentation results
         plant_seg_pub = np.asarray((plant_seg_bn * 255).astype(np.uint8))
@@ -257,41 +269,58 @@ class image_processor:
         #     self.det_img_right_pub.publish(det_image)
         self.det_img_pub.publish(det_image)
 
-        t1 = time.time()
-        print('t1 = %f' % (t1 - t0))
+        t1 = rospy.get_time()
+        if self.verbose:
+            rospy.loginfo('time consumption until yolo5 based image det and seg = %f' % (t1 - t0))
+        if self.log_on:
+            log_msg.data = str(rospy.get_time()) + ': finished yolo5 based image det and seg.'
+            self.log_msg_pub.publish(log_msg)
+            log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t1 - t0)
+            self.log_msg_pub.publish(log_msg)
 
         # (2) detect lanes
         # extract lane_det_lines with the two step hough transform method
-        # lane_det_lines, plant_seg_lines, rgb_lines = self.detect_lanes(plant_seg_bn, cv_image)
-        lines, plant_seg_lines, rgb_lines = self.detect_lanes_gaus(plant_seg_gaus, cv_image)
+        lines, seg_lines, rgb_lines = self.detect_lanes_gaus(plant_seg_gaus, cv_image)
         if lines is None:
             rospy.logwarn('no lane_det_lines are detected, skipping this image and returning ...')
             return
 
         # publish line detection results
         try:
-            ros_image = self.bridge.cv2_to_imgmsg(plant_seg_lines, "bgr8")
-            rgb_lines = self.bridge.cv2_to_imgmsg(rgb_lines, "bgr8")
+            ros_seg_lines_image = self.bridge.cv2_to_imgmsg(seg_lines, "bgr8")
+            ros_rgb_lines_image = self.bridge.cv2_to_imgmsg(rgb_lines, "bgr8")
         except CvBridgeError as e:
             print(e)
-        self.seg_line_pub.publish(ros_image)
+            return
+        self.seg_line_pub.publish(ros_seg_lines_image)
         # if self.cam_to_use == 0:
         #     self.line_rgb_left_pub.publish(rgb_lines)
         # elif self.cam_to_use==1:
         #     self.line_rgb_right_pub.publish(rgb_lines)
-        self.rgb_line_pub.publish(rgb_lines)
+        self.rgb_line_pub.publish(ros_rgb_lines_image)
 
-        t2 = time.time()
-        print('t2 = %f' % (t2 - t0))
+        t2 = rospy.get_time()
+        if self.verbose:
+            rospy.loginfo('time consumption until line det = %f' % (t2 - t0))
+        if self.log_on:
+            log_msg.data = str(rospy.get_time()) + ': finished line det.'
+            self.log_msg_pub.publish(log_msg)
+            log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t2 - t0)
+            self.log_msg_pub.publish(log_msg)
 
         # (3) control weeder
         # compute and send weeder cmd
-        # self.control_weeder(lane_det_lines)
         self.control_weeder_gaus(lines)
 
-        t3 = time.time()
-        print('t3 = %f' % (t3 - t0))
-        print('++++++++++++')
+        t3 = rospy.get_time()
+        if self.verbose:
+            rospy.loginfo('time consumption until weeder ctl = %f' % (t3 - t0))
+            rospy.loginfo('++++++++++++')
+        if self.log_on:
+            log_msg.data = str(rospy.get_time()) + ': finished sending weeder ctl.'
+            self.log_msg_pub.publish(log_msg)
+            log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t3 - t0)
+            self.log_msg_pub.publish(log_msg)
 
         # return once everything successes
         return
@@ -324,30 +353,21 @@ class image_processor:
                                           int(np.min(np.array([x2 - x1, y2 - y1]) / 2.0)), 1, -1)  # draw circle
                 cv2.rectangle(det_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
 
-        # mpl.use('TkAgg')
-        # plt.imshow(image_seg_bn, cmap='gray')
-        # plt.show()
-
         # ma blob img
         # ma_det = scipy.ndimage.uniform_filter(image_seg_bn, size=3, axes=None)
-        ma_det = image_seg_bn.copy()
+        img_seg_ma = image_seg_bn.copy()
         for n in range(3):
-            ma_det = scipy.ndimage.uniform_filter(ma_det, size=10)
-
-        # img_seg_ma = ma_det * (255.0 / np.max(ma_det))
-        # img_seg_ma = img_seg_ma.astype(np.uint8)
-        img_seg_ma = ma_det.copy()
+            img_seg_ma = scipy.ndimage.uniform_filter(img_seg_ma, size=10)
 
         # return seg result, i.e. a binary image
         return image_seg_bn, det_image, img_seg_ma
 
     def detect_lanes_gaus(self, plant_seg_guas, cv_image):
+        # wrap the raw image to let the middle lane in the middle of the image and vertically straight up, if needed.
+        if self.wrap_img_on:
+            wrap_param = self.wrap_param
+            wrap_H = self.wrap_H
 
-        wrap_param = self.wrap_param
-        wrap_H = self.wrap_H
-
-        wrap_img_on = 1
-        if wrap_img_on:
             ori_img_size = plant_seg_guas.shape
             u_half_size = int(ori_img_size[1]/2.0)
 
@@ -499,6 +519,7 @@ class image_processor:
 
         return lines, plant_seg_guas_lines, cv_image_lines
 
+    # TODO
     def control_weeder_gaus(self, lines):
         wrap_param = self.wrap_param
 
@@ -546,63 +567,6 @@ class image_processor:
 
         pass
 
-    # compute homography based on camera's intrinsic and extrinsic matrix, K and T
-    # K: camera intrinsic matrix
-    # T: camera extrinsic, camera pose in ground coord. the ground coord is (w.r.t. the weeder):
-    # X to the right, Y to the back, Z to the down
-    def compute_homography(self, K, T):
-        # extract four corners of the img, e.g. their u,v coords
-        uv = np.array(
-            [[0, self.img_size[1] - 1, self.img_size[1] - 1, 0], [0, 0, self.img_size[0] - 1, self.img_size[0] - 1]])
-
-        Rt_mc = T  # T of camera in map
-        Rt_cm = np.linalg.pinv(Rt_mc)  # T of map in camera
-
-        KRt = K @ Rt_cm[0:3, 0:4]  # K * T, 3x4
-
-        # the following code computes projection of uv points on the ground,
-        # i.e. solution of rays intersecting with XY planes (Z=0)
-        k11 = KRt[0, 0]
-        k12 = KRt[0, 1]
-        k13 = KRt[0, 2]
-        k14 = KRt[0, 3]
-        k21 = KRt[1, 0]
-        k22 = KRt[1, 1]
-        k23 = KRt[1, 2]
-        k24 = KRt[1, 3]
-        k31 = KRt[2, 0]
-        k32 = KRt[2, 1]
-        k33 = KRt[2, 2]
-        k34 = KRt[2, 3]
-
-        XY = np.divide(np.array([[k22 * k34 - k24 * k32, k14 * k32 - k12 * k34, k12 * k24 - k14 * k22],
-                                 [k24 * k31 - k21 * k34, k11 * k34 - k14 * k31, k14 * k21 - k11 * k24]]) \
-                       @ np.block([[uv], [np.ones((1, uv.shape[1]))]]), \
-                       np.array([[k21 * k32 - k22 * k31, k12 * k31 - k11 * k32, k11 * k22 - k12 * k21],
-                                 [k21 * k32 - k22 * k31, k12 * k31 - k11 * k32, k11 * k22 - k12 * k21]]) \
-                       @ np.block([[uv], [np.ones((1, uv.shape[1]))]]))
-
-        # prepare input image's u,v pairs of four corners
-        inputpts = np.float32([[uv[0, 0], uv[1, 0]], [uv[0, 1], uv[1, 1]], [uv[0, 2], uv[1, 2]], [uv[0, 3], uv[1, 3]]])
-        # prepare output image (bird eye view)'s u,v pairs of four corners
-        outputpts = np.float32([[XY[0, 0], XY[1, 0]], [XY[0, 1], XY[1, 1]], [XY[0, 2], XY[1, 2]], [XY[0, 3], XY[1, 3]]])
-        # make upper left point to be (0,0)
-        outputpts[:, 1] = outputpts[:, 1] - np.min(outputpts[:, 1])
-        outputpts[:, 0] = outputpts[:, 0] - np.min(outputpts[:, 0])
-        # change meter to pixel
-        outputpts = np.round(outputpts / self.bird_pixel_size)
-
-        # compute max pixel coords in (u,v)
-        bird_img_size = np.max(outputpts, axis=0)
-        # # change the order to (v,u) to be consistent with image size
-        # bird_img_size = np.array([bird_img_size[1], bird_img_size[0]])
-
-        # compute homography matrix
-        H = cv2.getPerspectiveTransform(inputpts, outputpts)
-
-        # return vars
-        return bird_img_size, H
-
     # resize image to the target size, but keep the horizontal and vertical scale. crop image if needed
     def resize_img_keep_scale(self, img):
         # compute aspect ratio
@@ -626,19 +590,21 @@ class image_processor:
         return img_resize
 
 
+# the main function entrance
 def main(args):
-    rospy.init_node('image_processor_node', anonymous=True)
-    img_proc = image_processor()
+    rospy.init_node('lane_det_node', anonymous=True)
+    lane_detector_obj = lane_detector()
 
     # if camera selection is failed, return
-    if img_proc.cam_to_use==-1:
+    if lane_detector_obj.cam_to_use==-1:
         rospy.logwarn('lane_det: camera selection failed, ending ...')
         return False
 
     # the main loop for line detection
     while not rospy.is_shutdown():
-        img_proc.img_cb()
+        lane_detector_obj.img_cb()
 
 
+# the main entrance
 if __name__ == '__main__':
     main(sys.argv)
