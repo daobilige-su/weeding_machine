@@ -119,10 +119,10 @@ class CmdSender:
     # func for extracting weeder speed and position
     def extract_speed_and_pos(self, speed_comma_pos):
         speed_dm_str, pos_str, _ = speed_comma_pos.split(',')
-        speed = float(speed_dm_str) / 10.0
+        speed = float(speed_dm_str) / 10.0  # dm/s to m/s
         if pos_str[-1] == '\n':
             pos_str = pos_str[:-1]
-        pos = float(pos_str)
+        pos = float(pos_str)/1000.0  # mm to m
 
         return speed, pos
 

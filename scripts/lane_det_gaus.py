@@ -109,13 +109,12 @@ class lane_detector:
         self.weeder_pos = self.param['weeder']['def_pos']
         self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
         self.weeder_speed_pos_sub = rospy.Subscriber('/weeder_speed_pos', Float32MultiArray, self.weeder_speed_pos_cb)
-        self.mid_line_y = None
-        self.control_bias = self.param['weeder']['ctrl_bias']
-        self.weeder_y = 0
-        self.mid_y_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
-        self.weeder_pos_buff = np.zeros((self.param['weeder']['cmd_buffer_size'],))
-        self.ctl_time_pre = -1
-        self.ctl_cmd = 0
+        self.weeder_cmd = 0
+        if self.param['weeder']['cmd_dist'] == -1:
+            self.weeder_cmd_buff = np.zeros((int(self.param['weeder']['cam_weeder_dist'] / self.param['weeder']['cmd_dist_def']), ))
+        else:
+            self.weeder_cmd_buff = np.zeros((int(self.param['weeder']['cam_weeder_dist']/self.param['weeder']['cmd_dist']),))
+        self.ctl_time_pre = rospy.get_time()
         self.weeder_cmd_delay = self.param['weeder']['weeder_cmd_delay']
 
         # logging
@@ -199,6 +198,7 @@ class lane_detector:
         if self.log_on:
             log_msg.data = str(rospy.get_time()) + ': start processing a new image.'
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
 
         # (0) choose camera in each cam_sel_time_interval time
         choose_cam_cur_time = rospy.get_time()
@@ -210,6 +210,7 @@ class lane_detector:
             if self.log_on:
                 log_msg.data = str(t01) + ': finished camera selection process.'
                 self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
 
         # select left or right camera image for lane detection
         if self.cam_to_use == 0:
@@ -217,11 +218,13 @@ class lane_detector:
             if self.log_on:
                 log_msg.data = str(rospy.get_time()) + ': using left camera image.'
                 self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
         elif self.cam_to_use == 1:
             cv_image = self.right_img
             if self.log_on:
                 log_msg.data = str(rospy.get_time()) + ': using right camera image.'
                 self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
         else:
             rospy.logwarn('lane_det: unknown camera selection.')
             return
@@ -230,6 +233,7 @@ class lane_detector:
             if self.log_on:
                 log_msg.data = str(rospy.get_time()) + ': camera image not ready, skipping.'
                 self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
             rospy.sleep(0.5)
             return
         else:
@@ -247,8 +251,10 @@ class lane_detector:
         if self.log_on:
             log_msg.data = str(rospy.get_time()) + ': finished preparing image.'
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
             log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t02 - t0)
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
 
         # (1) segment plants in the image
         # segment plants with yolov5
@@ -275,12 +281,14 @@ class lane_detector:
         if self.log_on:
             log_msg.data = str(rospy.get_time()) + ': finished yolo5 based image det and seg.'
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
             log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t1 - t0)
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
 
         # (2) detect lanes
         # extract lane_det_lines with the two step hough transform method
-        lines, seg_lines, rgb_lines = self.detect_lanes_gaus(plant_seg_gaus, cv_image)
+        lines, seg_lines, rgb_lines = self.detect_lanes(plant_seg_gaus, cv_image)
         if lines is None:
             rospy.logwarn('no lane_det_lines are detected, skipping this image and returning ...')
             return
@@ -305,12 +313,25 @@ class lane_detector:
         if self.log_on:
             log_msg.data = str(rospy.get_time()) + ': finished line det.'
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
             log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t2 - t0)
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
 
         # (3) control weeder
         # compute and send weeder cmd
-        self.control_weeder_gaus(lines)
+        weeder_cmd = self.control_weeder(lines)
+        if self.log_on:
+            log_msg.data = str(rospy.get_time()) + ': current weeder_pos = ' + str(self.weeder_pos)
+            self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
+            log_msg.data = str(rospy.get_time()) + ': current weeder_speed = ' + str(self.weeder_speed)
+            self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
+            if weeder_cmd is not None:
+                log_msg.data = str(rospy.get_time()) + ': new weeder_cmd = ' +str(weeder_cmd)
+                self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
 
         t3 = rospy.get_time()
         if self.verbose:
@@ -319,8 +340,13 @@ class lane_detector:
         if self.log_on:
             log_msg.data = str(rospy.get_time()) + ': finished sending weeder ctl.'
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
             log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t3 - t0)
             self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
+            log_msg.data = str(rospy.get_time()) + ': ++++++++++++'
+            self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
 
         # return once everything successes
         return
@@ -331,10 +357,7 @@ class lane_detector:
         image_rgb = cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB)
 
         # detection
-        t0 = time.time()
         results = self.model(image_rgb)
-        t1 = time.time()
-        print('yolo t: %f' % (t1-t0))
 
         # create a binary image for segmentation result
         image_seg_bn = np.zeros((image_rgb.shape[0], image_rgb.shape[1]))
@@ -362,7 +385,7 @@ class lane_detector:
         # return seg result, i.e. a binary image
         return image_seg_bn, det_image, img_seg_ma
 
-    def detect_lanes_gaus(self, plant_seg_guas, cv_image):
+    def detect_lanes(self, plant_seg_guas, cv_image):
         # wrap the raw image to let the middle lane in the middle of the image and vertically straight up, if needed.
         if self.wrap_img_on:
             wrap_param = self.wrap_param
@@ -497,7 +520,7 @@ class lane_detector:
         cv2.line(cv_image_lines, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
         cv2.line(cv_image_lines, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)
 
-        lines = np.block([[lane_u_d], [lane_u_u]])
+        lines = np.block([[lane_u_d], [lane_u_u]]) # down pixel's  and up pixel's u for a line
 
         # mpl.use('TkAgg')
         # plt.imshow(plant_seg_guas_lines)
@@ -517,10 +540,10 @@ class lane_detector:
         self.lane_det_lines = lines.copy()
         self.lane_det_track_u = self.lane_det_lines[0, :]
 
-        return lines, plant_seg_guas_lines, cv_image_lines
+        return lines, plant_seg_guas_lines, cv_image_lines  # line: 2x1, down pixel's  and up pixel's u for a line
 
-    # TODO
-    def control_weeder_gaus(self, lines):
+    # weeder control
+    def control_weeder(self, lines):
         wrap_param = self.wrap_param
 
         lines_u_d = lines[0, :]
@@ -528,44 +551,41 @@ class lane_detector:
 
         weeder_pos_pix = wrap_param[5]-wrap_param[0]+int((wrap_param[1]-wrap_param[0])*0.5)
 
+        # lane_u_offset = lane_u_mid - weeder_pos_pix
         lane_u_offset = lane_u_mid-(self.wrap_img_size[1]/2.0)
 
-        lane_y_offset = -lane_u_offset*(0.4/(lines_u_d[1]-lines_u_d[0]))
+        # y coord of the machine is pointing to left
+        lane_y_offset = -lane_u_offset*(self.param['weeder']['farm_lane_dist']/(lines_u_d[1]-lines_u_d[0]))
 
-        mid_y = lane_y_offset + self.weeder_pos/1000
+        weeder_cmd = lane_y_offset + self.weeder_pos
 
         # after a fixed distance, send weeder control cmd
-        if self.ctl_time_pre == -1:
-            self.ctl_time_pre = rospy.get_time()
         cur_time = rospy.get_time()
-        self.weeder_speed = 10
         if (cur_time - self.ctl_time_pre) * self.weeder_speed > self.param['weeder']['cmd_dist']:
-            step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))  # TODO
-            for step in range(step_num):  # TODO
-                self.mid_y_buff[0:self.mid_y_buff.shape[0] - 1] = self.mid_y_buff[1:self.mid_y_buff.shape[0]].copy()  # TODO
-                self.mid_y_buff[self.mid_y_buff.shape[0] - 1] = mid_y  # TODO
-                self.weeder_pos_buff[0:self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos_buff[1:self.weeder_pos_buff.shape[0]].copy()  # TODO
-                self.weeder_pos_buff[self.weeder_pos_buff.shape[0] - 1] = self.weeder_pos  # TODO
+
+            # fill the weeder_cmd_buff
+            step_num = int(np.floor((cur_time - self.ctl_time_pre) * self.weeder_speed / self.param['weeder']['cmd_dist']))
+            for step in range(step_num):
+                self.weeder_cmd_buff[0:self.weeder_cmd_buff.shape[0] - 1] = self.weeder_cmd_buff[1:self.weeder_cmd_buff.shape[0]].copy()
+                self.weeder_cmd_buff[self.weeder_cmd_buff.shape[0] - 1] = weeder_cmd
+
+            # use delayed weeder cmd or the newest weeder cmd
+            if self.weeder_cmd_delay:
+                self.weeder_cmd = self.weeder_cmd_buff[0] + self.weeder_pos_buff[0]
+            else:
+                self.weeder_cmd = self.weeder_cmd_buff[-1]  # extract the most recent position shift
 
             self.ctl_time_pre = cur_time
 
-            # self.weeder_y = self.mid_y_buff[0]  # extract the earliest position shift
-            if self.weeder_cmd_delay:  # TODO
-                self.weeder_y = self.mid_y_buff[0] + self.weeder_pos_buff[0] - self.weeder_pos  # TODO
-            else:  # TODO
-                self.weeder_y = self.mid_y_buff[-1]  # extract the most recent position shift  # TODO
-
             # send the control cmd, i.e. the absolute position shift of the weeder
             msg = Float32MultiArray()
-            msg.data = [self.weeder_y]
+            msg.data = [self.weeder_cmd]
             self.weeder_control_pub.publish(msg)
-            print('weeder cmd: ' % self.weeder_y)
             if self.verbose:
-                rospy.loginfo('ctl_cmd = %f \n' % (self.weeder_y))
+                rospy.loginfo('sent weeder_cmd = %f' % (self.weeder_cmd))
+            return self.weeder_cmd
         else:
-            return
-
-        pass
+            return None
 
     # resize image to the target size, but keep the horizontal and vertical scale. crop image if needed
     def resize_img_keep_scale(self, img):

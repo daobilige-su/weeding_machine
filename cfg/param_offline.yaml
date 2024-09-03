@@ -1,4 +1,4 @@
-verbose: 0
+verbose: 1
 
 cam:
   cam_to_use: 0 # -1: undetermined, 0: left, 1: right
@@ -26,13 +26,12 @@ lane_det:
   # wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, left lane top pix u, right lane bot pix u, right lane top pix u, top v, bot v, weeder bot u]
 
 weeder:
+  farm_lane_dist: 0.4
   def_speed: 0.5 # default weeder speed, m/s
   def_pos: 0.0
-  cmd_buffer_size: 35 # weeder cmd buffer
+  cam_weeder_dist: 1.6
   cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
-  ctrl_p: 0.5 # proportional gain for P controller
-  ctrl_u_min: 0.01 # the minimum control cmd in meter
-  ctrl_bias: 0.0 # how much bias should be added to weeder control in weeding Y coord
+  cmd_dist_def: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ser_port: /dev/ttyS0 # serial port for weeder mic
   baudrate: 115200
   bytesize: 8  # len
