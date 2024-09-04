@@ -35,37 +35,283 @@ class wrap_param_provider():
         self.right_cam_topic = self.param['cam']['right']['topic']
 
         self.bridge = CvBridge()
+        self.click_pt_type = None
+        self.click_pts = None
 
     # get wrap params for both left and right camera image
     def param_set(self):
         mpl.use('TkAgg')
 
         # left cam wrap param
+        print('+++++++++++++++++++++++++++++++++++++++++++++++')
         userinput = input("estimate left cam wrap param? (y):")
         if (userinput == 'y') or (userinput == 'Y'):
             # (1) obtain camera images
-            rospy.loginfo('waiting 100s for left camera image of topic [' + self.left_cam_topic + ']')
+            print('waiting 100s for left camera image of topic [' + self.left_cam_topic + ']')
             try:
                 img_msg = rospy.wait_for_message(self.left_cam_topic, Image, 100)
             except ROSException as e:
                 rospy.logwarn('image not received after 100s.')
                 rospy.logwarn(e)
                 return False
-            rospy.loginfo('camera image received. ')
+            print('camera image received. ')
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+            print('start left camera wrap param estimation.')
 
             cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(img_msg, "bgr8"))
 
+            self.param_set_for_one_cam(cv_img)
+
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+        else:
+            print('left cam wrap param will not be estimated.')
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+
+    def param_set_for_one_cam(self, cv_img):
             fig, ax = plt.subplots()
             ax.imshow(cv_img)
+            plt.pause(1)
 
             cid = fig.canvas.mpl_connect('button_press_event', self.mouse_onclick)
+
+            cv_img_draw = cv_img.copy()
+            cv_img_draw_fix = cv_img.copy()
+            self.click_pts = np.zeros((2, 7))
+
+            # (1) left line
+            left_line_k_b = None
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+            print('let us fix the left line.')
+            for n in range(10):
+                cv_img_draw = cv_img_draw_fix.copy()
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                self.click_pt_type = 1
+                input('click on the image for left line point 1, press ENTER after the click.')
+                plt.pause(0.1)
+                cv2.circle(cv_img_draw, (int(self.click_pts[0, 0]), int(self.click_pts[1, 0])), 5, (255, 0, 0), 5)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                self.click_pt_type = 2
+                input('click on the image for left line point 2, press ENTER after the click.')
+                plt.pause(0.1)
+                cv2.circle(cv_img_draw, (int(self.click_pts[0, 1]), int(self.click_pts[1, 1])), 5, (255, 0, 0), 5)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                # u = k*v+b
+                k = np.tan((self.click_pts[0, 0]-self.click_pts[0, 1])/(self.click_pts[1, 0]-self.click_pts[1, 1]))
+                b = self.click_pts[0, 0] - k * self.click_pts[1, 0]
+
+                pt_up = np.array([b, 0])
+                pt_down = np.array([k * (self.img_size[0] - 1)+ b, self.img_size[0]-1])
+
+                cv2.line(cv_img_draw, (int(pt_up[0]), int(pt_up[1])), (int(pt_down[0]), int(pt_down[1])), (0, 255, 0), 1, cv2.LINE_AA)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                userinput = input("confirm this? (y/n):")
+                if (userinput == 'y') or (userinput == 'Y'):
+                    left_line_k_b = np.array([k, b])
+                    break
+                else:
+                    print('ok, let us start again.')
+
+            if left_line_k_b is None:
+                print('unfortunately, left line is not confirmed after trying 10 times. returning.')
+                return
+
+            cv_img_draw_fix = cv_img_draw.copy()
+
+            # (2) right line
+            right_line_k_b = None
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+            print('let us fix the right line.')
+            for n in range(10):
+                cv_img_draw = cv_img_draw_fix.copy()
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                self.click_pt_type = 3
+                input('click on the image for right line point 1, press ENTER after the click.')
+                plt.pause(0.1)
+                cv2.circle(cv_img_draw, (int(self.click_pts[0, 2]), int(self.click_pts[1, 2])), 5, (255, 0, 0), 5)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                self.click_pt_type = 4
+                input('click on the image for right line point 2, press ENTER after the click.')
+                plt.pause(0.1)
+                cv2.circle(cv_img_draw, (int(self.click_pts[0, 3]), int(self.click_pts[1, 3])), 5, (255, 0, 0), 5)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                # u = k*v+b
+                k = np.tan(
+                    (self.click_pts[0, 2] - self.click_pts[0, 3]) / (self.click_pts[1, 2] - self.click_pts[1, 3]))
+                b = self.click_pts[0, 2] - k * self.click_pts[1, 2]
+
+                pt_up = np.array([b, 0])
+                pt_down = np.array([k * (self.img_size[0] - 1) + b, self.img_size[0] - 1])
+
+                cv2.line(cv_img_draw, (int(pt_up[0]), int(pt_up[1])), (int(pt_down[0]), int(pt_down[1])), (0, 255, 0), 1, cv2.LINE_AA)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+
+                userinput = input("confirm this? (y/n):")
+                if (userinput == 'y') or (userinput == 'Y'):
+                    right_line_k_b = np.array([k, b])
+                    break
+                else:
+                    print('ok, let us start again.')
+
+            if right_line_k_b is None:
+                print('unfortunately, right line is not confirmed after trying 10 times. returning.')
+                return
+
+            cv_img_draw_fix = cv_img_draw.copy()
+
+            # (3) v range
+            v_range = None
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+            userinput = input("use the whole height of the image (v range in [%d, %d])? (y/n):" % (0, self.img_size[0] - 1))
+            if (userinput == 'y') or (userinput == 'Y'):
+                self.click_pts[:, 4] = np.array([0, 0])
+                self.click_pts[:, 5] = np.array([0, self.img_size[0]-1])
+
+                v_range = np.array([self.click_pts[1, 4], self.click_pts[1, 5]])
+
+                cv2.line(cv_img_draw, (0, int(v_range[0])), (self.img_size[1]-1, int(v_range[0])), (0, 0, 255), 1, cv2.LINE_AA)
+                cv2.line(cv_img_draw, (0, int(v_range[1])), (self.img_size[1]-1, int(v_range[1])), (0, 0, 255), 1, cv2.LINE_AA)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+            else:
+                print('let us fix the v range.')
+                for n in range(10):
+                    cv_img_draw = cv_img_draw_fix.copy()
+                    ax.imshow(cv_img_draw)
+                    plt.pause(1)
+
+                    self.click_pt_type = 5
+                    input('click on the image for top limit of v, press ENTER after the click.')
+                    plt.pause(0.1)
+                    v_range = np.array([self.click_pts[1, 4], self.click_pts[1, 5]])
+                    cv2.line(cv_img_draw, (0, int(v_range[0])), (self.img_size[1]-1, int(v_range[0])), (0, 0, 255), 1, cv2.LINE_AA)
+                    ax.imshow(cv_img_draw)
+                    plt.pause(1)
+
+                    self.click_pt_type = 6
+                    input('click on the image for bottom limit of v, press ENTER after the click.')
+                    plt.pause(0.1)
+                    v_range = np.array([self.click_pts[1, 4], self.click_pts[1, 5]])
+                    cv2.line(cv_img_draw, (0, int(v_range[1])), (self.img_size[1]-1, int(v_range[1])), (0, 0, 255), 1, cv2.LINE_AA)
+                    ax.imshow(cv_img_draw)
+                    plt.pause(1)
+
+                    userinput = input("confirm this? (y/n):")
+                    if (userinput == 'y') or (userinput == 'Y'):
+                        break
+                    else:
+                        v_range = None
+                        print('ok, let us start again.')
+
+                if v_range is None:
+                    print('unfortunately, v range is not confirmed after trying 10 times. returning.')
+                    return
+
+            cv_img_draw_fix = cv_img_draw.copy()
+
+            # (4) compute four corners
+            # u = k*v+b
+            four_corners = np.zeros((2, 4))
+            four_corners[1, 0] = v_range[1]  # bot left v
+            four_corners[1, 1] = v_range[1]  # bot right v
+            four_corners[1, 2] = v_range[0]  # top left v
+            four_corners[1, 3] = v_range[0]  # top right v
+
+            four_corners[0, 0] = left_line_k_b[0] * four_corners[1, 0] + left_line_k_b[1]  # bot left u
+            four_corners[0, 1] = right_line_k_b[0] * four_corners[1, 1] + right_line_k_b[1]  # bot right u
+            four_corners[0, 2] = left_line_k_b[0] * four_corners[1, 2] + left_line_k_b[1]  # top left u
+            four_corners[0, 3] = right_line_k_b[0] * four_corners[1, 3] + right_line_k_b[1]  # top right u
+
+            cv2.circle(cv_img_draw, (int(four_corners[0, 0]), int(four_corners[1, 0])), 3, (0, 0, 255), 3)
+            cv2.circle(cv_img_draw, (int(four_corners[0, 1]), int(four_corners[1, 1])), 3, (0, 0, 255), 3)
+            cv2.circle(cv_img_draw, (int(four_corners[0, 2]), int(four_corners[1, 2])), 3, (0, 0, 255), 3)
+            cv2.circle(cv_img_draw, (int(four_corners[0, 3]), int(four_corners[1, 3])), 3, (0, 0, 255), 3)
+            ax.imshow(cv_img_draw)
+            plt.pause(1)
+
+            cv_img_draw_fix = cv_img_draw.copy()
+
+            # (5) weeder location
+            weeder_loc = None
+            print('+++++++++++++++++++++++++++++++++++++++++++++++')
+            userinput = input("use the middle of the two lines as weeder location? (y/n):")
+            if (userinput == 'y') or (userinput == 'Y'):
+                self.click_pts[:, 6] = np.array([(four_corners[0, 0]+four_corners[0, 1])/2.0, v_range[1]])
+                weeder_loc = np.array([self.click_pts[0, 6], v_range[1]])
+
+                cv2.circle(cv_img_draw, (int(weeder_loc[0]), int(weeder_loc[1])), 3, (0, 0, 0), 3)
+                ax.imshow(cv_img_draw)
+                plt.pause(1)
+            else:
+                print('let us fix the weeder location.')
+                for n in range(10):
+                    cv_img_draw = cv_img_draw_fix.copy()
+                    ax.imshow(cv_img_draw)
+                    plt.pause(1)
+
+                    self.click_pt_type = 7
+                    input('click on the image near bottom v range for the weeder location, press ENTER after the click.')
+                    plt.pause(0.1)
+                    weeder_loc = np.array([self.click_pts[0, 6], v_range[1]])
+
+                    cv2.circle(cv_img_draw, (int(weeder_loc[0]), int(weeder_loc[1])), 3, (0, 0, 0), 3)
+                    ax.imshow(cv_img_draw)
+                    plt.pause(1)
+
+                    userinput = input("confirm this? (y/n):")
+                    if (userinput == 'y') or (userinput == 'Y'):
+                        break
+                    else:
+                        weeder_loc = None
+                        print('ok, let us start again.')
+
+                if weeder_loc is None:
+                    print('unfortunately, weeder location is not confirmed after trying 10 times. returning.')
+                    return
+
+            cv_img_draw_fix = cv_img_draw.copy()
+
+            # (6)
+
+            return
+
+
+
+
 
     def mouse_onclick(self, event):
         print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
               ('double' if event.dblclick else 'single', event.button,
                event.x, event.y, event.xdata, event.ydata))
 
-
+        if self.click_pt_type == 1:
+            self.click_pts[:, 0] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 2:
+            self.click_pts[:, 1] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 3:
+            self.click_pts[:, 2] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 4:
+            self.click_pts[:, 3] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 5:
+            self.click_pts[:, 4] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 6:
+            self.click_pts[:, 5] = np.array([event.xdata, event.ydata])
+        elif self.click_pt_type == 7:
+            self.click_pts[:, 6] = np.array([event.xdata, event.ydata])
 
 
     def resize_img_keep_scale(self, img):
