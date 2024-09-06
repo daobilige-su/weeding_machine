@@ -81,22 +81,16 @@ class lane_detector:
 
         # lane det params
         self.wrap_img_on = self.param['lane_det']['wrap_img_on']
-        self.wrap_param = np.array(self.param['lane_det']['wrap_param']).reshape((-1,))  # np.array([120, 225, 180, 0, 220, 250])
-        self.wrap_img_size = np.array(
-            [int(self.wrap_param[4] - self.wrap_param[3] + 1), int(2 * (self.wrap_param[1] - self.wrap_param[0]))])
-        h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - self.wrap_param[2]
+        # wrap_param: [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
+        self.wrap_param = np.array(self.param['lane_det']['wrap_param']).reshape((-1,))
+        self.wrap_img_size = np.array([int(self.wrap_param[4] - self.wrap_param[5] + 1), int(2 * (self.wrap_param[1] - self.wrap_param[0]))])
+        h_shift = (self.wrap_param[0] + self.wrap_param[1]) / 2.0 - (self.wrap_param[2] + self.wrap_param[3]) / 2.0
         if h_shift > 0:
-            inputpts = np.float32(
-                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],
-                 [0, 0]])
-            outputpts = np.float32(
-                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
+            inputpts = np.float32([[0, self.wrap_img_size[0]], [self.wrap_img_size[1], self.wrap_img_size[0]], [self.wrap_img_size[1] - int(h_shift), 0], [0, 0]])
+            outputpts = np.float32([[0, self.wrap_img_size[0]], [self.wrap_img_size[1], self.wrap_img_size[0]], [self.wrap_img_size[1], 0], [int(h_shift), 0]])
         else:
-            inputpts = np.float32(
-                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1], 0], [int(h_shift), 0]])
-            outputpts = np.float32(
-                [[0, self.img_size[0]], [self.img_size[1], self.img_size[0]], [self.img_size[1] - int(h_shift), 0],
-                 [0, 0]])
+            inputpts = np.float32([[0, self.wrap_img_size[0]], [self.wrap_img_size[1], self.wrap_img_size[0]], [self.wrap_img_size[1], 0], [int(abs(h_shift)), 0]])
+            outputpts = np.float32([[0, self.wrap_img_size[0]], [self.wrap_img_size[1], self.wrap_img_size[0]], [self.wrap_img_size[1] - int(abs(h_shift)), 0], [0, 0]])
         self.wrap_H = cv2.getPerspectiveTransform(inputpts, outputpts)
 
         self.cfunc_handle = ctypes.CDLL(self.pkg_path + "libGrayScaleHoughLine.so") # cpp function call
@@ -389,26 +383,21 @@ class lane_detector:
         # wrap the raw image to let the middle lane in the middle of the image and vertically straight up, if needed.
         if self.wrap_img_on:
             wrap_param = self.wrap_param
-            wrap_H = self.wrap_H
 
-            ori_img_size = plant_seg_guas.shape
-            u_half_size = int(ori_img_size[1]/2.0)
-
-            # cv_image
-            cv_image = cv_image[wrap_param[3]:(wrap_param[4]+1), :, :]
-            cv_image = np.concatenate((cv_image[:, 0:u_half_size, :]*0, cv_image, cv_image[:, 0:u_half_size, :]*0), axis=1)
-
-            cv_image = cv_image[:, int(u_half_size+wrap_param[0] - 0.5*(wrap_param[1]-wrap_param[0])):int(u_half_size+wrap_param[1] + 0.5*(wrap_param[1]-wrap_param[0])), :]
-
-            cv_image = cv2.warpPerspective(cv_image, wrap_H, (cv_image.shape[1], cv_image.shape[0]))
-
-            # plant_seg_guas
-            plant_seg_guas = plant_seg_guas[wrap_param[3]:(wrap_param[4] + 1), :]
+            # fill two sides of the image will black image with half of its width
+            u_half_size = int(self.img_size[1] / 2.0)
+            cv_image = np.concatenate((cv_image[:, 0:u_half_size, :] * 0, cv_image, cv_image[:, 0:u_half_size, :] * 0), axis=1)
             plant_seg_guas = np.concatenate((plant_seg_guas[:, 0:u_half_size] * 0, plant_seg_guas, plant_seg_guas[:, 0:u_half_size] * 0), axis=1)
-
-            plant_seg_guas = plant_seg_guas[:, int(u_half_size + wrap_param[0] - 0.5 * (wrap_param[1] - wrap_param[0])):int(u_half_size + wrap_param[1] + 0.5 * (wrap_param[1] - wrap_param[0]))]
-
-            plant_seg_guas = cv2.warpPerspective(plant_seg_guas, wrap_H, (plant_seg_guas.shape[1], plant_seg_guas.shape[0]))
+            # crop image, 1st vertical then 2nd horizontal
+            cv_image = cv_image[wrap_param[5]:(wrap_param[4] + 1), :, :]  # vertical crop
+            cv_image = cv_image[:, int(u_half_size + wrap_param[0] - 0.5 * (wrap_param[1] - wrap_param[0])):
+                                   int(u_half_size + wrap_param[1] + 0.5 * (wrap_param[1] - wrap_param[0])), :]
+            plant_seg_guas = plant_seg_guas[wrap_param[5]:(wrap_param[4] + 1), :]  # vertical crop
+            plant_seg_guas = plant_seg_guas[:, int(u_half_size + wrap_param[0] - 0.5 * (wrap_param[1] - wrap_param[0])):
+                                               int(u_half_size + wrap_param[1] + 0.5 * (wrap_param[1] - wrap_param[0]))]
+            # transform
+            cv_image = cv2.warpPerspective(cv_image, self.wrap_H, (cv_image.shape[1], cv_image.shape[0]))
+            plant_seg_guas = cv2.warpPerspective(plant_seg_guas, self.wrap_H, (plant_seg_guas.shape[1], plant_seg_guas.shape[0]))
 
         cv_image_lines = cv_image.copy()
         img_size = plant_seg_guas.shape

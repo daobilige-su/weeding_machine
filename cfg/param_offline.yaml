@@ -22,8 +22,9 @@ lane_det:
   yolo_plant_id: 1
   yolo_model: best_offline21.pt
   wrap_img_on: 1
-  wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
-  # wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, left lane top pix u, right lane bot pix u, right lane top pix u, top v, bot v, weeder bot u]
+  # wrap_param: [180, 319, 200, 0, 239, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
+  # wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
+  wrap_param: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
 
 weeder:
   farm_lane_dist: 0.4
