@@ -33,6 +33,7 @@ class wrap_param_provider():
         self.img_size = np.array([self.param['cam']['height'], self.param['cam']['width']])
         self.left_cam_topic = self.param['cam']['left']['topic']
         self.right_cam_topic = self.param['cam']['right']['topic']
+        self.wrap_img_size_u = self.param['lane_det']['wrap_img_size_u']
 
         self.bridge = CvBridge()
         self.click_pt_type = None
@@ -349,7 +350,7 @@ class wrap_param_provider():
             outputpts = np.float32([[0, wrap_img_size[0]], [wrap_img_size[1], wrap_img_size[0]], [wrap_img_size[1] - int(abs(h_shift)), 0],[0, 0]])
         wrap_H = cv2.getPerspectiveTransform(inputpts, outputpts)
 
-        # (7) fill, crop and transform the image
+        # (7) fill, crop, transform, and resize the image
         print('+++++++++++++++++++++++++++++++++++++++++++++++')
         print('filling, cropping and transforming the image by now ...')
         cv_img_wrap = cv_img.copy()
@@ -366,6 +367,10 @@ class wrap_param_provider():
         plt.pause(2)
         # transform
         cv_img_wrap = cv2.warpPerspective(cv_img_wrap, wrap_H, (cv_img_wrap.shape[1], cv_img_wrap.shape[0]))
+        ax.imshow(cv_img_wrap)
+        plt.pause(2)
+        # resize
+        cv_img_wrap = cv2.resize(cv_img_wrap, (int(self.wrap_img_size_u), int(cv_img_wrap.shape[0] * (self.wrap_img_size_u / cv_img_wrap.shape[1]))))
         ax.imshow(cv_img_wrap)
         plt.pause(2)
         print('+++++++++++++++++++++++++++++++++++++++++++++++')
