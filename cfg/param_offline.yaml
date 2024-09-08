@@ -44,6 +44,7 @@ weeder:
   hardware_interaction: 1 # whether weeder mic is connected, enable serial, otherwise not
   verbose: 1
   weeder_cmd_delay: 0
+  weeder_cmd_max_shift: 0.05
 
 log:
   enable: 1

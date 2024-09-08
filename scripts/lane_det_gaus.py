@@ -454,78 +454,96 @@ class lane_detector:
                                                           (self.wrap_param[4] - self.wrap_param[5])))
         theta_range = np.array([theta for theta in range(-10, 10 + 1)]) + ll_theta_from_wrap_param
 
-        his = np.zeros((img_size[1], theta_range.shape[0]))
+        # inter h
+        inter_h = ((self.wrap_param[1]-self.wrap_param[0]) / ((self.wrap_param[1]-self.wrap_param[0]) - (self.wrap_param[3]-self.wrap_param[2]))) * self.wrap_img_size[0]
+        shift_range = np.array([x for x in range(-10, 10 + 1)])
+
+        # his = np.zeros((img_size[1], theta_range.shape[0]))
+        his_3d = np.zeros((x_range.shape[0], theta_range.shape[0], shift_range.shape[0]))
+
+
 
         # t1 = time.time()
         # print('t1 = %f' % (t1-t0))
 
         # handle.GrayScaleHoughLine.argtypes = [ctypes.POINTER(ctypes.c_double)]
         # res = handle.GrayScaleHoughLine(np.array([0.0, 1.0]).ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
-        cvar_x_range_num = int(img_size[1])
-        cvar_y_range_num = int(img_size[0])
+        cvar_img_size_u = int(self.wrap_img_size[1])
+        cvar_img_size_v = int(self.wrap_img_size[0])
+        cvar_x_range_num = int(x_range.shape[0])
+        cvar_y_range_num = int(y_range.shape[0])
         cvar_theta_range = theta_range.astype(np.double).ctypes.data_as(ctypes.POINTER(ctypes.c_double))
         cvar_theta_range_num = int(theta_range.shape[0])
+        cvar_shift_range = shift_range.astype(np.double).ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+        cvar_shift_range_num = int(shift_range.shape[0])
+        cvar_inter_h = ctypes.c_double(inter_h)
         cvar_plant_seg_guas = plant_seg_guas.reshape((-1,)).astype(np.double).ctypes.data_as(ctypes.POINTER(ctypes.c_double)) # row first
-        np_cvar_his = his.reshape((-1,)).astype(np.double)
+        np_cvar_his = his_3d.reshape((-1,)).astype(np.double)
 
         # t21 = time.time()
         # print('t21 = %f' % (t21 - t0))
 
-        self.cfunc_handle.GrayScaleHoughLine(cvar_x_range_num, cvar_y_range_num, cvar_theta_range, cvar_theta_range_num,
+        self.cfunc_handle.GrayScaleHoughLine(cvar_img_size_u, cvar_img_size_v, cvar_x_range_num, cvar_y_range_num, cvar_theta_range, cvar_theta_range_num,
+                                             cvar_shift_range, cvar_shift_range_num, cvar_inter_h,
                                              cvar_plant_seg_guas, np_cvar_his.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
         # t22 = time.time()
         # print('t22 = %f' % (t22 - t0))
 
-        np_cvar_his = np_cvar_his.reshape((img_size[1], theta_range.shape[0]))
+        his_3d = np_cvar_his.reshape((x_range.shape[0], theta_range.shape[0], shift_range.shape[0])).copy()
 
-        # inter h
-        inter_h = ((self.wrap_param[1]-self.wrap_param[0]) / ((self.wrap_param[1]-self.wrap_param[0]) - (self.wrap_param[3]-self.wrap_param[2]))) * self.wrap_img_size[0]
-        shift_range = np.array([x for x in range(-10, 10 + 1)])
 
-        his_3d = np.zeros((img_size[1], theta_range.shape[0], shift_range.shape[0]))
-        for u_idx in range(x_range.shape[0]):
-            u = x_range[u_idx]
+        # for u_idx in range(x_range.shape[0]):
+        #     u = x_range[u_idx]
+        #
+        #     for theta_idx in range(theta_range.shape[0]):
+        #         theta = theta_range[theta_idx]
+        #
+        #         # x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * (img_size[0]-1))
+        #         x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * 0)
+        #         y = y_range.copy()
+        #
+        #         x_valid = x[(0 <= x) & (x < img_size[1])]
+        #         y_valid = y[(0 <= x) & (x < img_size[1])]
+        #
+        #         x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
+        #         y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
+        #
+        #         # his[u_idx, theta_idx] = np.sum(plant_seg_guas[(img_size[0]-1)-y_valid.astype(int), x_valid.astype(int)])
+        #         ll_heur = np.sum(plant_seg_guas[(img_size[0]-1)-y_valid.astype(int), x_valid.astype(int)])
+        #
+        #         for shift_idx in range(shift_range.shape[0]):
+        #             shift = shift_range[shift_idx]
+        #
+        #             rl_u = u + self.wrap_img_size[1]/2.0 + shift  # right line bottom u
+        #
+        #             inter_u = u + inter_h * np.tan(-np.deg2rad(theta))  # u of the top intersection point of left and right line
+        #
+        #             rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))
+        #
+        #             x = -np.tan(np.deg2rad(rl_theta)) * y_range + (rl_u + np.tan(np.deg2rad(rl_theta)) * 0)
+        #             y = y_range.copy()
+        #
+        #             x_valid = x[(0 <= x) & (x < img_size[1])]
+        #             y_valid = y[(0 <= x) & (x < img_size[1])]
+        #
+        #             x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
+        #             y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
+        #
+        #             rl_heur = np.sum(plant_seg_guas[(img_size[0] - 1) - y_valid.astype(int), x_valid.astype(int)])
+        #
+        #             his_3d[u_idx, theta_idx, shift_idx] = ll_heur + rl_heur
 
-            for theta_idx in range(theta_range.shape[0]):
-                theta = theta_range[theta_idx]
+        his_3d_u_track = his_3d.copy() * 0
 
-                # x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * (img_size[0]-1))
-                x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * 0)
-                y = y_range.copy()
+        track_u_width = 5
+        if self.lane_det_track_u is not None:
+            his_3d_u_track[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1])), :, :] = \
+                his_3d[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1])), :, :].copy()
+        else:
+            his_3d_u_track = his_3d.copy()
 
-                x_valid = x[(0 <= x) & (x < img_size[1])]
-                y_valid = y[(0 <= x) & (x < img_size[1])]
-
-                x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-                y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-
-                his[u_idx, theta_idx] = np.sum(plant_seg_guas[(img_size[0]-1)-y_valid.astype(int), x_valid.astype(int)])
-                ll_heur = his[u_idx, theta_idx]
-
-                for shift_idx in range(shift_range.shape[0]):
-                    shift = shift_range[shift_idx]
-
-                    rl_u = u + self.wrap_img_size[1]/2.0 + shift  # right line bottom u
-
-                    inter_u = u + inter_h * np.tan(-np.deg2rad(theta))  # u of the top intersection point of left and right line
-
-                    rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))
-
-                    x = -np.tan(np.deg2rad(rl_theta)) * y_range + (rl_u + np.tan(np.deg2rad(rl_theta)) * 0)
-                    y = y_range.copy()
-
-                    x_valid = x[(0 <= x) & (x < img_size[1])]
-                    y_valid = y[(0 <= x) & (x < img_size[1])]
-
-                    x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-                    y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-
-                    rl_heur = np.sum(plant_seg_guas[(img_size[0] - 1) - y_valid.astype(int), x_valid.astype(int)])
-
-                    his_3d[u_idx, theta_idx, shift_idx] = ll_heur + rl_heur
-
-        max_idx = np.unravel_index(np.argmax(his_3d), his_3d.shape)
+        max_idx = np.unravel_index(np.argmax(his_3d_u_track), his_3d_u_track.shape)
 
         ll_u = x_range[max_idx[0]]
         ll_theta = theta_range[max_idx[1]]
@@ -536,48 +554,6 @@ class lane_detector:
         lane_u_d = np.array([ll_u, rl_u])
         lane_theta = np.array([ll_theta, rl_theta])
         lane_u_u = np.array([-np.tan(np.deg2rad(lane_theta[0]))*img_size[0] + lane_u_d[0], -np.tan(np.deg2rad(lane_theta[1]))*img_size[0] + lane_u_d[1]])
-
-
-        # TODO
-        # his = np_cvar_his.copy()
-        #
-        # his_u = np.max(his, axis=1)
-        #
-        # track_u_add = his_u*0
-        # track_u_width = 20
-        # if self.lane_det_track_u is not None:
-        #     track_u_add[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1]))] = 1
-        #     track_u_add[int(max(0, self.lane_det_track_u[1]-track_u_width)) : int(min(self.lane_det_track_u[1]+track_u_width, img_size[1]))] = 1
-        #
-        # # print(self.lane_det_track_u)
-        #
-        # track_u_weight = 1.0
-        # if track_on:
-        #     his_u = his_u + track_u_add*(np.max(his_u)-np.min(his_u))*track_u_weight
-        #
-        # his_u_ext = np.block([np.array([0]), his_u, np.array([0])])
-        # peaks_ext, peaks_ext_info = signal.find_peaks(his_u_ext, distance=(img_size[1]/4.0))
-        #
-        # if peaks_ext.shape[0]<2:
-        #     lines = None
-        #     rospy.logwarn('lane_det_gaus: less than 2 lanes detected. ')
-        #     return lines, plant_seg_guas_lines, cv_image_lines
-        #
-        # peaks = peaks_ext-1
-        # peaks_height = his_u[peaks]
-        # asc_idx = np.argsort(peaks_height)
-        #
-        # two_asc_idx = asc_idx[-2:]
-        # two_peaks = peaks[two_asc_idx]
-        #
-        # if two_peaks[0]>two_peaks[1]:
-        #     two_peaks = np.flip(two_peaks)
-        #
-        # lane_u_d = two_peaks.copy()
-        # lane_theta_idx = np.array([np.argmax(his[lane_u_d[0], :]), np.argmax(his[lane_u_d[1], :])])
-        # lane_theta = theta_range[lane_theta_idx]
-        # lane_u_u = np.array([-np.tan(np.deg2rad(lane_theta[0]))*img_size[0] + lane_u_d[0], -np.tan(np.deg2rad(lane_theta[1]))*img_size[0] + lane_u_d[1]])
-        # TODO
 
         # plant_seg_guas_lines = np.stack((plant_seg_guas,) * 3, axis=-1)
         cv2.line(plant_seg_guas_lines, (int(lane_u_d[0]), img_size[0]-1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
@@ -641,6 +617,12 @@ class lane_detector:
                 self.weeder_cmd = self.weeder_cmd_buff[0]
             else:
                 self.weeder_cmd = self.weeder_cmd_buff[-1]  # extract the most recent position shift
+
+            # apply max shift
+            if self.weeder_cmd > self.param['weeder']['weeder_cmd_max_shift']:
+                self.weeder_cmd = self.param['weeder']['weeder_cmd_max_shift']
+            elif self.weeder_cmd < (-self.param['weeder']['weeder_cmd_max_shift']):
+                self.weeder_cmd = -self.param['weeder']['weeder_cmd_max_shift']
 
             self.ctl_time_pre = cur_time
 
