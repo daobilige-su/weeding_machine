@@ -7,8 +7,8 @@ cam:
   width: 320
   height: 240
   left:
-    topic: /usb_cam1/image_raw
-#    topic: /camera/image_raw
+#    topic: /usb_cam1/image_raw
+    topic: /camera/image_raw
 #    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
 #    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
@@ -28,9 +28,12 @@ lane_det:
   wrap_param_right_cam: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_img_size_u: 100
   track_on: 1
-  track_img_pre_weight: 0.5
-  theta_range: 10 # search left line's theta angle from [-theta_range + ref_theta, theta_range + ref_theta]
-  shift_range: 10 # search right line's bottom u coords from [-shift_range + left_line_bot_u + ref_lane_width, shift_range + left_line_bot_u + ref_lane_width]
+  track_line_width: 1
+  track_line_filter_width: 7
+  track_img_pre_weight: 1
+  theta_range: 5 # search left line's theta angle from [-theta_range + ref_theta, theta_range + ref_theta]
+  shift_range: 5 # search right line's bottom u coords from [-shift_range + left_line_bot_u + ref_lane_width, shift_range + left_line_bot_u + ref_lane_width]
+  track_u_width: 5
 
 weeder:
   farm_lane_dist: 0.4

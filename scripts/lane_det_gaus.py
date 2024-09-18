@@ -405,7 +405,9 @@ class lane_detector:
         # ma_det = scipy.ndimage.uniform_filter(image_seg_bn, size=3, axes=None)
         img_seg_ma = image_seg_bn.copy()
         for n in range(3):
-            img_seg_ma = scipy.ndimage.uniform_filter(img_seg_ma, size=10)
+            # img_seg_ma = scipy.ndimage.uniform_filter(img_seg_ma, size=10)  # don't use scipy.ndimage.uniform_filter, it will shift the location slightly
+            img_seg_ma = cv2.GaussianBlur(img_seg_ma, (11, 11), 0)
+
 
         # return seg result, i.e. a binary image
         return image_seg_bn, det_image, img_seg_ma
@@ -423,7 +425,7 @@ class lane_detector:
             cv_image = cv_image[wrap_param[5]:(wrap_param[4] + 1), :, :]  # vertical crop
             cv_image = cv_image[:, int(u_half_size + wrap_param[0] - 0.5 * (wrap_param[1] - wrap_param[0])):
                                    int(u_half_size + wrap_param[1] + 0.5 * (wrap_param[1] - wrap_param[0])), :]
-            plant_seg_guas = plant_seg_guas[wrap_param[5]:(wrap_param[4] + 1), :]  # vertical crop
+            plant_seg_guas = plant_seg_guas[wrap_param[5]:(wrap_param[4] + 1), :]  # horizontal crop
             plant_seg_guas = plant_seg_guas[:, int(u_half_size + wrap_param[0] - 0.5 * (wrap_param[1] - wrap_param[0])):
                                                int(u_half_size + wrap_param[1] + 0.5 * (wrap_param[1] - wrap_param[0]))]
             # transform
@@ -434,7 +436,6 @@ class lane_detector:
             cv_image = cv2.resize(cv_image, (int(self.wrap_img_size_u), int(cv_image.shape[0] * (self.wrap_img_size_u / cv_image.shape[1]))))
             plant_seg_guas = cv2.resize(plant_seg_guas, (int(self.wrap_img_size_u), int(plant_seg_guas.shape[0] * (self.wrap_img_size_u / plant_seg_guas.shape[1]))))
 
-        cv_image_lines = cv_image.copy()
         img_size = plant_seg_guas.shape  # image size after wrapping
 
         # track previous line det results
@@ -445,6 +446,7 @@ class lane_detector:
         if track_on:
             if np.max(self.lane_det_track_img)>0.01:
                 plant_seg_guas = plant_seg_guas + self.lane_det_track_img * track_img_pre_weight
+                plant_seg_guas[plant_seg_guas>1] = 1
 
         # prepare vars for searching best two parallel lines
         x_range = np.array([x for x in range(int(img_size[1]/2.0))])  # u ranges in wrapped image
@@ -476,71 +478,82 @@ class lane_detector:
         cvar_plant_seg_guas = plant_seg_guas.reshape((-1,)).astype(np.double).ctypes.data_as(ctypes.POINTER(ctypes.c_double)) # row first
         np_cvar_his = his_3d.reshape((-1,)).astype(np.double)
 
-        # t21 = time.time()
-        # print('t21 = %f' % (t21 - t0))
-
         # compute hist 3D: np_cvar_his, using C++
         self.cfunc_handle.GrayScaleHoughLine(cvar_img_size_u, cvar_img_size_v, cvar_x_range_num, cvar_y_range_num, cvar_theta_range, cvar_theta_range_num,
                                              cvar_shift_range, cvar_shift_range_num, cvar_inter_h,
                                              cvar_plant_seg_guas, np_cvar_his.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
 
-        # t22 = time.time()
-        # print('t22 = %f' % (t22 - t0))
-
         his_3d = np_cvar_his.reshape((x_range.shape[0], theta_range.shape[0], shift_range.shape[0])).copy()  # recover its 3D shape
+
+        # ref lines' bot (down) pixel's  and top (up) pixel's u
+        ref_lines_u_d = np.array([self.wrap_img_size_u*0.25, self.wrap_img_size_u*0.75])
+        ref_lines_u_u = np.array([self.wrap_img_size_u*0.5 - ((self.wrap_param[3]-self.wrap_param[2])/2.0)*(self.wrap_img_size_u/((self.wrap_param[1]-self.wrap_param[0])*2.0)),
+                                  self.wrap_img_size_u*0.5 + ((self.wrap_param[3]-self.wrap_param[2])/2.0)*(self.wrap_img_size_u/((self.wrap_param[1]-self.wrap_param[0])*2.0))])
+        ref_lines_theta = np.array([np.rad2deg(np.arctan2(ref_lines_u_d[0] - ref_lines_u_u[0], self.wrap_img_size[0])),
+                                    np.rad2deg(np.arctan2(ref_lines_u_d[1] - ref_lines_u_u[1], self.wrap_img_size[0]))])
+        ref_lines_idx = np.array([np.argmin(np.abs(x_range - ref_lines_u_d[0])), np.argmin(np.abs(theta_range - ref_lines_theta[0])), (shift_range.shape[0]-1)/2.0])
+        # ref lines' heuristic score
+        ref_lines_heur = his_3d[int(ref_lines_idx[0]), int(ref_lines_idx[1]), int(ref_lines_idx[2])]
 
         # from previous line det results, only search left line's bot u from the local region of the previous det result
         his_3d_u_track = his_3d.copy() * 0
-        track_u_width = 5
+        track_u_width = self.param['lane_det']['track_u_width']
         if self.lane_det_track_u is not None:
             his_3d_u_track[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1])), :, :] = \
                 his_3d[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1])), :, :].copy()
         else:
             his_3d_u_track = his_3d.copy()
-
         # get the best two lines
         max_idx = np.unravel_index(np.argmax(his_3d_u_track), his_3d_u_track.shape)
+        track_lines_heur = his_3d[max_idx[0], max_idx[1], max_idx[2]]
 
-        # collect left and right lines' params
-        ll_u = x_range[max_idx[0]]  # left line's bot u
-        ll_theta = theta_range[max_idx[1]]  # left line's theta
-        rl_u = ll_u + self.wrap_img_size[1]/2.0 + shift_range[max_idx[2]]  # right line's bot u
-        inter_u = ll_u + inter_h * np.tan(-np.deg2rad(ll_theta))  # left and right lines intersection point's u coord
-        rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))  # right line's theta
+        if track_lines_heur>ref_lines_heur:
+            # collect left and right lines' params
+            ll_u = x_range[max_idx[0]]  # left line's bot u
+            ll_theta = theta_range[max_idx[1]]  # left line's theta
+            rl_u = ll_u + self.wrap_img_size[1]/2.0 + shift_range[max_idx[2]]  # right line's bot u
+            inter_u = ll_u + inter_h * np.tan(-np.deg2rad(ll_theta))  # left and right lines intersection point's u coord
+            rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))  # right line's theta
 
-        lane_u_d = np.array([ll_u, rl_u])
-        lane_theta = np.array([ll_theta, rl_theta])
-        lane_u_u = np.array([-np.tan(np.deg2rad(lane_theta[0]))*img_size[0] + lane_u_d[0], -np.tan(np.deg2rad(lane_theta[1]))*img_size[0] + lane_u_d[1]])
+            lane_u_d = np.array([ll_u, rl_u])  # two lines' bottom points' u coord
+            lane_theta = np.array([ll_theta, rl_theta])  # two lines' theta
+            # two lines' upper points' u coord
+            lane_u_u = np.array([-np.tan(np.deg2rad(lane_theta[0]))*img_size[0] + lane_u_d[0], -np.tan(np.deg2rad(lane_theta[1]))*img_size[0] + lane_u_d[1]])
+        else:
+            lane_u_d = ref_lines_u_d.copy()  # two lines' bottom points' u coord
+            lane_theta = ref_lines_theta.copy()  # two lines' theta
+            lane_u_u = ref_lines_u_u.copy()  # two lines' upper points' u coord
 
-        plant_seg_guas_lines = np.stack(((plant_seg_guas * (255.0 / np.max(plant_seg_guas))).astype(np.uint8),) * 3, axis=-1)
+        # plant seg + lines image
+        plant_seg_guas_lines = np.stack(((plant_seg_guas * 255.0).astype(np.uint8),) * 3, axis=-1)
         # plant_seg_guas_lines = np.stack((plant_seg_guas,) * 3, axis=-1)
         cv2.line(plant_seg_guas_lines, (int(lane_u_d[0]), img_size[0]-1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
         cv2.line(plant_seg_guas_lines, (int(lane_u_d[1]), img_size[0]-1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(plant_seg_guas_lines, (int(ref_lines_u_d[0]), img_size[0]-1), (int(ref_lines_u_u[0]), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.line(plant_seg_guas_lines, (int(ref_lines_u_d[1]), img_size[0]-1), (int(ref_lines_u_u[1]), 0), (255, 0, 0), 1, cv2.LINE_AA)
 
-        # cv_image_lines = cv_image.copy()
+        # raw rgb image + lines image
+        cv_image_lines = cv_image.copy()
         cv2.line(cv_image_lines, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
         cv2.line(cv_image_lines, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(cv_image_lines, (int(ref_lines_u_d[0]), img_size[0]-1), (int(ref_lines_u_u[0]), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.line(cv_image_lines, (int(ref_lines_u_d[1]), img_size[0]-1), (int(ref_lines_u_u[1]), 0), (255, 0, 0), 1, cv2.LINE_AA)
 
         lines = np.block([[lane_u_d], [lane_u_u]]) # down pixel's  and up pixel's u for a line
 
-        # mpl.use('TkAgg')
-        # plt.imshow(plant_seg_guas_lines)
-        # plt.show()
-
-        # t3 = time.time()
-        # print('t3 = %f' % (t3-t2))
-        # print('++++++++++++')
-
+        # re-generate tracking image, i.e. add two white lines on the black background image
         self.lane_det_track_img = self.lane_det_track_img * 0
-        cv2.line(self.lane_det_track_img, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), 1, 10, cv2.LINE_AA)
-        cv2.line(self.lane_det_track_img, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), 1, 10, cv2.LINE_AA)
-
+        cv2.line(self.lane_det_track_img, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), 1, self.param['lane_det']['track_line_width'], cv2.LINE_AA)
+        cv2.line(self.lane_det_track_img, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), 1, self.param['lane_det']['track_line_width'], cv2.LINE_AA)
+        # blur the two white lines, don't use scipy.ndimage.uniform_filter or cv2.blur, they will shift the position of the line
         for n in range(5):
-            self.lane_det_track_img = scipy.ndimage.uniform_filter(self.lane_det_track_img, size=20, mode='constant', cval=0)
+            self.lane_det_track_img = cv2.GaussianBlur(self.lane_det_track_img, (self.param['lane_det']['track_line_filter_width'], self.param['lane_det']['track_line_filter_width']), 0)
 
+        # save relevant vars
         self.lane_det_lines = lines.copy()
         self.lane_det_track_u = self.lane_det_lines[0, :]
 
+        # return results
         return lines, plant_seg_guas_lines, cv_image_lines  # line: 2x1, down pixel's  and up pixel's u for a line
 
     # weeder control
