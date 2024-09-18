@@ -7,8 +7,8 @@ cam:
   width: 320
   height: 240
   left:
-#    topic: /usb_cam1/image_raw
-    topic: /camera/image_raw
+    topic: /usb_cam1/image_raw
+#    topic: /camera/image_raw
 #    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
 #    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
@@ -24,7 +24,7 @@ lane_det:
   wrap_img_on: 1
   # wrap_param: [180, 319, 200, 0, 239, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
   # wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
-  wrap_param_left_cam: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
+  wrap_param_left_cam: [102, 223, 152, 198, 174,  16, 162]  # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_param_right_cam: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_img_size_u: 100
 
@@ -33,7 +33,7 @@ weeder:
   def_speed: 0.5 # default weeder speed, m/s
   def_pos: 0.0
   cam_weeder_dist: 1.6
-  cmd_dist: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
+  cmd_dist: -1 # 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   cmd_dist_def: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   ser_port: /dev/ttyS0 # serial port for weeder mic
   baudrate: 115200

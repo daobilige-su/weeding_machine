@@ -1,0 +1,1350 @@
+1725952229.1371398, start processing a new image.
+1725952229.1384249, using left camera image.
+1725952229.1397674," camera image not ready, skipping."
+1725952229.641749, start processing a new image.
+1725952229.6431255, using left camera image.
+1725952229.6444318," camera image not ready, skipping."
+1725952230.1464705, start processing a new image.
+1725952230.1478472, using left camera image.
+1725952230.1492836," camera image not ready, skipping."
+1725952230.6512504, start processing a new image.
+1725952230.6526709, using left camera image.
+1725952230.6540122," camera image not ready, skipping."
+1725952231.156031, start processing a new image.
+1725952231.1574082, using left camera image.
+1725952231.158736," camera image not ready, skipping."
+1725952231.6606395, start processing a new image.
+1725952231.6618443, using left camera image.
+1725952231.6630254," camera image not ready, skipping."
+1725952232.1650245, start processing a new image.
+1725952232.1665893, using left camera image.
+1725952232.1679797," camera image not ready, skipping."
+1725952232.6700478, start processing a new image.
+1725952232.6714163, using left camera image.
+1725952232.6727483," camera image not ready, skipping."
+1725952233.1744597, start processing a new image.
+1725952233.1758204, using left camera image.
+1725952233.1771455," camera image not ready, skipping."
+1725952233.679096, start processing a new image.
+1725952233.6804597, using left camera image.
+1725952233.6819005," camera image not ready, skipping."
+1725952234.1839037, start processing a new image.
+1725952234.1852787, using left camera image.
+1725952234.18656," camera image not ready, skipping."
+1725952234.688578, start processing a new image.
+1725952234.6899548, using left camera image.
+1725952234.6912892," camera image not ready, skipping."
+1725952235.1932778, start processing a new image.
+1725952235.1945949, using left camera image.
+1725952235.1959152," camera image not ready, skipping."
+1725952235.6980636, start processing a new image.
+1725952235.6994648, using left camera image.
+1725952235.7007992," camera image not ready, skipping."
+1725952236.2024648, start processing a new image.
+1725952236.2039068, using left camera image.
+1725952236.2052393," camera image not ready, skipping."
+1725952236.7072763, start processing a new image.
+1725952236.708652, using left camera image.
+1725952236.7100513," camera image not ready, skipping."
+1725952237.2120554, start processing a new image.
+1725952237.213426, using left camera image.
+1725952237.2147577," camera image not ready, skipping."
+1725952237.7167816, start processing a new image.
+1725952237.7181559, using left camera image.
+1725952237.719538," camera image not ready, skipping."
+1725952238.2216263, start processing a new image.
+1725952238.2229955, using left camera image.
+1725952238.224322," camera image not ready, skipping."
+1725952238.7263684, start processing a new image.
+1725952238.727686, using left camera image.
+1725952238.7289653," camera image not ready, skipping."
+1725952239.2309754, start processing a new image.
+1725952239.2322748, using left camera image.
+1725952239.2335973," camera image not ready, skipping."
+1725952239.7355938, start processing a new image.
+1725952239.736921, using left camera image.
+1725952239.7382755," camera image not ready, skipping."
+1725952240.240223, start processing a new image.
+1725952240.2415657, using left camera image.
+1725952240.242889," camera image not ready, skipping."
+1725952240.744867, start processing a new image.
+1725952240.7463331, using left camera image.
+1725952240.7476594," camera image not ready, skipping."
+1725952241.2496223, start processing a new image.
+1725952241.2509959, using left camera image.
+1725952241.2523432," camera image not ready, skipping."
+1725952241.7543693, start processing a new image.
+1725952241.7557387, using left camera image.
+1725952241.757061," camera image not ready, skipping."
+1725952242.25906, start processing a new image.
+1725952242.2604244, using left camera image.
+1725952242.2617457," camera image not ready, skipping."
+1725952242.7637784, start processing a new image.
+1725952242.7651422, using left camera image.
+1725952242.7664235," camera image not ready, skipping."
+1725952243.2683, start processing a new image.
+1725952243.269694, using left camera image.
+1725952243.2711363," camera image not ready, skipping."
+1725952243.77313, start processing a new image.
+1725952243.7744255, using left camera image.
+1725952243.7757523," camera image not ready, skipping."
+1725952244.2778783, start processing a new image.
+1725952244.2792494, using left camera image.
+1725952244.2805402," camera image not ready, skipping."
+1725952244.7823887, start processing a new image.
+1725952244.7837732, using left camera image.
+1725952244.7851307," camera image not ready, skipping."
+1725952245.2869284, start processing a new image.
+1725952245.2882419, using left camera image.
+1725952245.2913935, finished preparing image.
+1725952245.2925043, time consumption until now = 0.0026671886444091797
+1725952245.5418153, finished yolo5 based image det and seg.
+1725952245.5431798, time consumption until now = 0.25312280654907227
+1725952245.5993676, finished line det.
+1725952245.600467, time consumption until now = 0.3111851215362549
+1725952245.601711, current weeder_pos = -0.003000000026077032
+1725952245.6032221, current weeder_speed = 0.0
+1725952245.6116312, finished sending weeder ctl.
+1725952245.6127799, time consumption until now = 0.31835460662841797
+1725952245.6139534, ++++++++++++
+1725952245.6153944, start processing a new image.
+1725952245.6165795, using left camera image.
+1725952245.6195526, finished preparing image.
+1725952245.6207252, time consumption until now = 0.0024933815002441406
+1725952245.6429732, finished yolo5 based image det and seg.
+1725952245.644095, time consumption until now = 0.026152849197387695
+1725952245.701661, finished line det.
+1725952245.7028396, time consumption until now = 0.08520317077636719
+1725952245.704031, current weeder_pos = -0.003000000026077032
+1725952245.7051916, current weeder_speed = 0.0
+1725952245.7112043, finished sending weeder ctl.
+1725952245.712407, time consumption until now = 0.09096860885620117
+1725952245.7136471, ++++++++++++
+1725952245.7149262, start processing a new image.
+1725952245.7161598, using left camera image.
+1725952245.7188904, finished preparing image.
+1725952245.7200572, time consumption until now = 0.002604961395263672
+1725952245.7462006, finished yolo5 based image det and seg.
+1725952245.7474213, time consumption until now = 0.02947831153869629
+1725952245.8126595, finished line det.
+1725952245.8138483, time consumption until now = 0.09685420989990234
+1725952245.8150647, current weeder_pos = -0.003000000026077032
+1725952245.8162467, current weeder_speed = 0.0
+1725952245.8188107, finished sending weeder ctl.
+1725952245.819995, time consumption until now = 0.10253381729125977
+1725952245.8211832, ++++++++++++
+1725952245.8223903, start processing a new image.
+1725952245.8235815, using left camera image.
+1725952245.8255694, finished preparing image.
+1725952245.8266613, time consumption until now = 0.0024569034576416016
+1725952245.8435962, finished yolo5 based image det and seg.
+1725952245.844788, time consumption until now = 0.0202329158782959
+1725952245.8988106, finished line det.
+1725952245.8999379, time consumption until now = 0.07512688636779785
+1725952245.9010968, current weeder_pos = -0.003000000026077032
+1725952245.902226, current weeder_speed = 0.0
+1725952245.9052777, finished sending weeder ctl.
+1725952245.906371, time consumption until now = 0.08095097541809082
+1725952245.907503, ++++++++++++
+1725952245.9086514, start processing a new image.
+1725952245.909782, using left camera image.
+1725952245.9121602, finished preparing image.
+1725952245.9132795, time consumption until now = 0.00238800048828125
+1725952245.9301877, finished yolo5 based image det and seg.
+1725952245.9313343, time consumption until now = 0.02020096778869629
+1725952245.9848611, finished line det.
+1725952245.986045, time consumption until now = 0.0752108097076416
+1725952245.9872012, current weeder_pos = -0.003000000026077032
+1725952245.9883826, current weeder_speed = 0.0
+1725952245.9911544, finished sending weeder ctl.
+1725952245.99235, time consumption until now = 0.0808718204498291
+1725952245.9934769, ++++++++++++
+1725952245.9946241, start processing a new image.
+1725952245.9957554, using left camera image.
+1725952245.9977412, finished preparing image.
+1725952245.998933, time consumption until now = 0.002354860305786133
+1725952246.0146892, finished yolo5 based image det and seg.
+1725952246.0158727, time consumption until now = 0.01909351348876953
+1725952246.069936, finished line det.
+1725952246.0710669, time consumption until now = 0.0742495059967041
+1725952246.0722232, current weeder_pos = -0.003000000026077032
+1725952246.0733435, current weeder_speed = 0.0
+1725952246.075867, finished sending weeder ctl.
+1725952246.0769517, time consumption until now = 0.07982325553894043
+1725952246.0781312, ++++++++++++
+1725952246.0792794, start processing a new image.
+1725952246.0804713, using left camera image.
+1725952246.082464, finished preparing image.
+1725952246.0835874, time consumption until now = 0.002461671829223633
+1725952246.1005185, finished yolo5 based image det and seg.
+1725952246.101702, time consumption until now = 0.020261287689208984
+1725952246.155766, finished line det.
+1725952246.1569495, time consumption until now = 0.07549595832824707
+1725952246.1581662, current weeder_pos = -0.003000000026077032
+1725952246.159349, current weeder_speed = 0.0
+1725952246.161883, finished sending weeder ctl.
+1725952246.1630652, time consumption until now = 0.08121466636657715
+1725952246.1641924, ++++++++++++
+1725952246.1653352, start processing a new image.
+1725952246.1664343, using left camera image.
+1725952246.1683717, finished preparing image.
+1725952246.1695516, time consumption until now = 0.0023643970489501953
+1725952246.185789, finished yolo5 based image det and seg.
+1725952246.186916, time consumption until now = 0.01949787139892578
+1725952246.2411063, finished line det.
+1725952246.2422981, time consumption until now = 0.07469296455383301
+1725952246.243567, current weeder_pos = -0.003000000026077032
+1725952246.2447505, current weeder_speed = 0.0
+1725952246.2474093, finished sending weeder ctl.
+1725952246.248531, time consumption until now = 0.08054995536804199
+1725952246.249659, ++++++++++++
+1725952246.2508411, start processing a new image.
+1725952246.2520454, using left camera image.
+1725952246.2540765, finished preparing image.
+1725952246.2551963, time consumption until now = 0.0025179386138916016
+1725952246.270789, finished yolo5 based image det and seg.
+1725952246.2719753, time consumption until now = 0.018962383270263672
+1725952246.325733, finished line det.
+1725952246.3268237, time consumption until now = 0.07392406463623047
+1725952246.3279498, current weeder_pos = -0.003000000026077032
+1725952246.3291357, current weeder_speed = 0.0
+1725952246.3316913, finished sending weeder ctl.
+1725952246.3328779, time consumption until now = 0.07949280738830566
+1725952246.3340673, ++++++++++++
+1725952246.335275, start processing a new image.
+1725952246.336409, using left camera image.
+1725952246.3384326, finished preparing image.
+1725952246.3395567, time consumption until now = 0.002407073974609375
+1725952246.3560507, finished yolo5 based image det and seg.
+1725952246.3572395, time consumption until now = 0.019699811935424805
+1725952246.410533, finished line det.
+1725952246.4117973, time consumption until now = 0.07428550720214844
+1725952246.412952, current weeder_pos = -0.003000000026077032
+1725952246.414135, current weeder_speed = 0.0
+1725952246.4168527, finished sending weeder ctl.
+1725952246.4179742, time consumption until now = 0.08006072044372559
+1725952246.4190998, ++++++++++++
+1725952246.4202409, start processing a new image.
+1725952246.4214325, using left camera image.
+1725952246.4233367, finished preparing image.
+1725952246.424522, time consumption until now = 0.002377033233642578
+1725952246.440927, finished yolo5 based image det and seg.
+1725952246.4420981, time consumption until now = 0.01973104476928711
+1725952246.496568, finished line det.
+1725952246.4977436, time consumption until now = 0.07538294792175293
+1725952246.4990003, current weeder_pos = -0.003000000026077032
+1725952246.500183, current weeder_speed = 0.0
+1725952246.5028212, finished sending weeder ctl.
+1725952246.5039499, time consumption until now = 0.08107757568359375
+1725952246.5050814, ++++++++++++
+1725952246.506234, start processing a new image.
+1725952246.507364, using left camera image.
+1725952246.509458, finished preparing image.
+1725952246.5105822, time consumption until now = 0.0023660659790039062
+1725952246.528895, finished yolo5 based image det and seg.
+1725952246.529993, time consumption until now = 0.021596193313598633
+1725952246.5838785, finished line det.
+1725952246.5851154, time consumption until now = 0.07665038108825684
+1725952246.5862722, current weeder_pos = -0.003000000026077032
+1725952246.5873926, current weeder_speed = 0.0
+1725952246.5900936, finished sending weeder ctl.
+1725952246.5912158, time consumption until now = 0.08230113983154297
+1725952246.5923517, ++++++++++++
+1725952246.5935352, start processing a new image.
+1725952246.5947223, using left camera image.
+1725952246.5966935, finished preparing image.
+1725952246.597811, time consumption until now = 0.0024728775024414062
+1725952246.6149204, finished yolo5 based image det and seg.
+1725952246.616106, time consumption until now = 0.020386695861816406
+1725952246.6702106, finished line det.
+1725952246.6713378, time consumption until now = 0.07570362091064453
+1725952246.6725001, current weeder_pos = -0.003000000026077032
+1725952246.6736815, current weeder_speed = 0.0
+1725952246.6764507, finished sending weeder ctl.
+1725952246.6776319, time consumption until now = 0.08135199546813965
+1725952246.6787767, ++++++++++++
+1725952246.6799192, start processing a new image.
+1725952246.6811132, using left camera image.
+1725952246.6830015, finished preparing image.
+1725952246.6841812, time consumption until now = 0.0024156570434570312
+1725952246.7011995, finished yolo5 based image det and seg.
+1725952246.7023714, time consumption until now = 0.020229816436767578
+1725952246.7565768, finished line det.
+1725952246.7577004, time consumption until now = 0.07559466361999512
+1725952246.7588592, current weeder_pos = -0.003000000026077032
+1725952246.7600267, current weeder_speed = 0.0
+1725952246.7628052, finished sending weeder ctl.
+1725952246.7639837, time consumption until now = 0.08138060569763184
+1725952246.765173, ++++++++++++
+1725952246.766387, start processing a new image.
+1725952246.7675803, using left camera image.
+1725952246.7695348, finished preparing image.
+1725952246.7706518, time consumption until now = 0.0024673938751220703
+1725952246.7859416, finished yolo5 based image det and seg.
+1725952246.787063, time consumption until now = 0.018604040145874023
+1725952246.841416, finished line det.
+1725952246.8425062, time consumption until now = 0.07390809059143066
+1725952246.84368, current weeder_pos = -0.003000000026077032
+1725952246.844862, current weeder_speed = 0.0
+1725952246.8475018, finished sending weeder ctl.
+1725952246.8486214, time consumption until now = 0.07967448234558105
+1725952246.8497465, ++++++++++++
+1725952246.8509555, start processing a new image.
+1725952246.8521464, using left camera image.
+1725952246.8541389, finished preparing image.
+1725952246.8552601, time consumption until now = 0.002407550811767578
+1725952246.871393, finished yolo5 based image det and seg.
+1725952246.8725157, time consumption until now = 0.019427776336669922
+1725952246.926278, finished line det.
+1725952246.927467, time consumption until now = 0.07423758506774902
+1725952246.9287717, current weeder_pos = -0.003000000026077032
+1725952246.9299545, current weeder_speed = 0.0
+1725952246.9325266, finished sending weeder ctl.
+1725952246.9337068, time consumption until now = 0.08019804954528809
+1725952246.9348967, ++++++++++++
+1725952246.9360378, start processing a new image.
+1725952246.9372294, using left camera image.
+1725952246.9390504, finished preparing image.
+1725952246.9402344, time consumption until now = 0.0023336410522460938
+1725952246.956499, finished yolo5 based image det and seg.
+1725952246.9576838, time consumption until now = 0.019488811492919922
+1725952247.0111206, finished line det.
+1725952247.0123067, time consumption until now = 0.07405281066894531
+1725952247.0134678, current weeder_pos = -0.003000000026077032
+1725952247.0145884, current weeder_speed = 0.0
+1725952247.0173037, finished sending weeder ctl.
+1725952247.018391, time consumption until now = 0.07974958419799805
+1725952247.0195286, ++++++++++++
+1725952247.0206745, start processing a new image.
+1725952247.0218892, using left camera image.
+1725952247.0239031, finished preparing image.
+1725952247.0250816, time consumption until now = 0.002501964569091797
+1725952247.0405414, finished yolo5 based image det and seg.
+1725952247.041727, time consumption until now = 0.018955469131469727
+1725952247.0952966, finished line det.
+1725952247.0964818, time consumption until now = 0.07366514205932617
+1725952247.0976343, current weeder_pos = -0.003000000026077032
+1725952247.098759, current weeder_speed = 0.0
+1725952247.1013172, finished sending weeder ctl.
+1725952247.102369, time consumption until now = 0.07928681373596191
+1725952247.1035728, ++++++++++++
+1725952247.1047769, start processing a new image.
+1725952247.1059058, using left camera image.
+1725952247.1079476, finished preparing image.
+1725952247.1090665, time consumption until now = 0.0024247169494628906
+1725952247.1261277, finished yolo5 based image det and seg.
+1725952247.1273139, time consumption until now = 0.02026534080505371
+1725952247.1805766, finished line det.
+1725952247.1816993, time consumption until now = 0.07483172416687012
+1725952247.1828446, current weeder_pos = -0.003000000026077032
+1725952247.1840334, current weeder_speed = 0.0
+1725952247.186695, finished sending weeder ctl.
+1725952247.187821, time consumption until now = 0.08043026924133301
+1725952247.188944, ++++++++++++
+1725952247.1901076, start processing a new image.
+1725952247.1913104, using left camera image.
+1725952247.1932478, finished preparing image.
+1725952247.1943736, time consumption until now = 0.002416849136352539
+1725952247.2106993, finished yolo5 based image det and seg.
+1725952247.211825, time consumption until now = 0.019623994827270508
+1725952247.266237, finished line det.
+1725952247.2674215, time consumption until now = 0.07514500617980957
+1725952247.268576, current weeder_pos = -0.003000000026077032
+1725952247.2696967, current weeder_speed = 0.0
+1725952247.2722888, finished sending weeder ctl.
+1725952247.2734702, time consumption until now = 0.08072328567504883
+1725952247.2746606, ++++++++++++
+1725952247.2758124, start processing a new image.
+1725952247.27703, using left camera image.
+1725952247.2790902, finished preparing image.
+1725952247.2802112, time consumption until now = 0.002534151077270508
+1725952247.2962582, finished yolo5 based image det and seg.
+1725952247.2974415, time consumption until now = 0.019489765167236328
+1725952247.3516629, finished line det.
+1725952247.3528476, time consumption until now = 0.07487225532531738
+1725952247.3540647, current weeder_pos = -0.003000000026077032
+1725952247.3552468, current weeder_speed = 0.0
+1725952247.3578105, finished sending weeder ctl.
+1725952247.3589919, time consumption until now = 0.08063292503356934
+1725952247.3601825, ++++++++++++
+1725952247.3613884, start processing a new image.
+1725952247.362487, using left camera image.
+1725952247.3644004, finished preparing image.
+1725952247.365518, time consumption until now = 0.002359628677368164
+1725952247.381126, finished yolo5 based image det and seg.
+1725952247.3822181, time consumption until now = 0.018770933151245117
+1725952247.436596, finished line det.
+1725952247.4376864, time consumption until now = 0.07420468330383301
+1725952247.4388964, current weeder_pos = -0.003000000026077032
+1725952247.440015, current weeder_speed = 0.0
+1725952247.446119, finished sending weeder ctl.
+1725952247.4473398, time consumption until now = 0.07982659339904785
+1725952247.4485724, ++++++++++++
+1725952247.4498472, start processing a new image.
+1725952247.4510167, using left camera image.
+1725952247.4535828, finished preparing image.
+1725952247.4547737, time consumption until now = 0.0024416446685791016
+1725952247.4750922, finished yolo5 based image det and seg.
+1725952247.4762788, time consumption until now = 0.024071455001831055
+1725952247.5314677, finished line det.
+1725952247.5325913, time consumption until now = 0.08045578002929688
+1725952247.5337493, current weeder_pos = -0.003000000026077032
+1725952247.534879, current weeder_speed = 0.0
+1725952247.5409188, finished sending weeder ctl.
+1725952247.5421448, time consumption until now = 0.08624100685119629
+1725952247.5434086, ++++++++++++
+1725952247.5446606, start processing a new image.
+1725952247.545921, using left camera image.
+1725952247.5486727, finished preparing image.
+1725952247.5498974, time consumption until now = 0.002659320831298828
+1725952247.568301, finished yolo5 based image det and seg.
+1725952247.5694883, time consumption until now = 0.02259516716003418
+1725952247.6236289, finished line det.
+1725952247.6248686, time consumption until now = 0.07802009582519531
+1725952247.6261852, current weeder_pos = -0.003000000026077032
+1725952247.6274796, current weeder_speed = 0.0
+1725952247.6330118, finished sending weeder ctl.
+1725952247.6342044, time consumption until now = 0.08407139778137207
+1725952247.6354442, ++++++++++++
+1725952247.636683, start processing a new image.
+1725952247.6378982, using left camera image.
+1725952247.640641, finished preparing image.
+1725952247.6418295, time consumption until now = 0.0025780200958251953
+1725952247.6602986, finished yolo5 based image det and seg.
+1725952247.6614742, time consumption until now = 0.022543668746948242
+1725952247.715341, finished line det.
+1725952247.7165112, time consumption until now = 0.07766008377075195
+1725952247.717944, current weeder_pos = -0.003000000026077032
+1725952247.7191644, current weeder_speed = 0.0
+1725952247.7243207, finished sending weeder ctl.
+1725952247.7254815, time consumption until now = 0.08372068405151367
+1725952247.726742, ++++++++++++
+1725952247.7279563, start processing a new image.
+1725952247.7291803, using left camera image.
+1725952247.7317393, finished preparing image.
+1725952247.7329175, time consumption until now = 0.0025451183319091797
+1725952247.7507575, finished yolo5 based image det and seg.
+1725952247.7519262, time consumption until now = 0.021673917770385742
+1725952247.8058536, finished line det.
+1725952247.8070493, time consumption until now = 0.07679891586303711
+1725952247.8082094, current weeder_pos = -0.003000000026077032
+1725952247.8093553, current weeder_speed = 0.0
+1725952247.8117993, finished sending weeder ctl.
+1725952247.8129163, time consumption until now = 0.08251404762268066
+1725952247.8140445, ++++++++++++
+1725952247.8152027, start processing a new image.
+1725952247.8163326, using left camera image.
+1725952247.8183296, finished preparing image.
+1725952247.8194501, time consumption until now = 0.002351999282836914
+1725952247.8348634, finished yolo5 based image det and seg.
+1725952247.8360436, time consumption until now = 0.018703699111938477
+1725952247.904559, finished line det.
+1725952247.9056842, time consumption until now = 0.0883338451385498
+1725952247.9068391, current weeder_pos = -0.003000000026077032
+1725952247.9079623, current weeder_speed = 0.0
+1725952247.9105792, finished sending weeder ctl.
+1725952247.9116976, time consumption until now = 0.09389400482177734
+1725952247.912824, ++++++++++++
+1725952247.913969, start processing a new image.
+1725952247.9151661, using left camera image.
+1725952247.9171169, finished preparing image.
+1725952247.9182985, time consumption until now = 0.0024156570434570312
+1725952247.9345074, finished yolo5 based image det and seg.
+1725952247.9356916, time consumption until now = 0.01958775520324707
+1725952247.9914808, finished line det.
+1725952247.992681, time consumption until now = 0.07649660110473633
+1725952247.9939008, current weeder_pos = -0.003000000026077032
+1725952247.9950829, current weeder_speed = 0.0
+1725952247.9976764, finished sending weeder ctl.
+1725952247.9987848, time consumption until now = 0.08230996131896973
+1725952247.9999733, ++++++++++++
+1725952248.0011215, start processing a new image.
+1725952248.0023158, using left camera image.
+1725952248.004182, finished preparing image.
+1725952248.005298, time consumption until now = 0.0024101734161376953
+1725952248.0208735, finished yolo5 based image det and seg.
+1725952248.0219955, time consumption until now = 0.01870250701904297
+1725952248.0760238, finished line det.
+1725952248.0772033, time consumption until now = 0.07393884658813477
+1725952248.078327, current weeder_pos = -0.003000000026077032
+1725952248.0795147, current weeder_speed = 0.0
+1725952248.0820725, finished sending weeder ctl.
+1725952248.0831943, time consumption until now = 0.0795736312866211
+1725952248.084383, ++++++++++++
+1725952248.0855944, start processing a new image.
+1725952248.086723, using left camera image.
+1725952248.0886424, finished preparing image.
+1725952248.089823, time consumption until now = 0.0023412704467773438
+1725952248.1058958, finished yolo5 based image det and seg.
+1725952248.1070797, time consumption until now = 0.01920175552368164
+1725952248.1629913, finished line det.
+1725952248.1641748, time consumption until now = 0.0764458179473877
+1725952248.1652992, current weeder_pos = -0.003000000026077032
+1725952248.1663888, current weeder_speed = 0.0
+1725952248.169053, finished sending weeder ctl.
+1725952248.1701467, time consumption until now = 0.08192896842956543
+1725952248.1713247, ++++++++++++
+1725952248.1725893, start processing a new image.
+1725952248.1738062, using left camera image.
+1725952248.1757724, finished preparing image.
+1725952248.1769423, time consumption until now = 0.0024042129516601562
+1725952248.1931484, finished yolo5 based image det and seg.
+1725952248.1942954, time consumption until now = 0.019594430923461914
+1725952248.2489445, finished line det.
+1725952248.2501302, time consumption until now = 0.07539200782775879
+1725952248.2513463, current weeder_pos = -0.003000000026077032
+1725952248.252532, current weeder_speed = 0.0
+1725952248.2550738, finished sending weeder ctl.
+1725952248.2561903, time consumption until now = 0.08107781410217285
+1725952248.2573168, ++++++++++++
+1725952248.2584295, start processing a new image.
+1725952248.2595606, using left camera image.
+1725952248.2615166, finished preparing image.
+1725952248.2626977, time consumption until now = 0.002356290817260742
+1725952248.2801473, finished yolo5 based image det and seg.
+1725952248.2813323, time consumption until now = 0.020734786987304688
+1725952248.3350399, finished line det.
+1725952248.3361285, time consumption until now = 0.07568168640136719
+1725952248.3372326, current weeder_pos = -0.003000000026077032
+1725952248.3382812, current weeder_speed = 0.0
+1725952248.3409617, finished sending weeder ctl.
+1725952248.3420827, time consumption until now = 0.08100104331970215
+1725952248.3432093, ++++++++++++
+1725952248.344353, start processing a new image.
+1725952248.3454843, using left camera image.
+1725952248.3474083, finished preparing image.
+1725952248.348526, time consumption until now = 0.0024085044860839844
+1725952248.3660562, finished yolo5 based image det and seg.
+1725952248.367243, time consumption until now = 0.02062225341796875
+1725952248.4210656, finished line det.
+1725952248.4221985, time consumption until now = 0.07563018798828125
+1725952248.423375, current weeder_pos = -0.003000000026077032
+1725952248.4244952, current weeder_speed = 0.0
+1725952248.4272637, finished sending weeder ctl.
+1725952248.4283872, time consumption until now = 0.08127260208129883
+1725952248.4295151, ++++++++++++
+1725952248.4306593, start processing a new image.
+1725952248.4317892, using left camera image.
+1725952248.4337497, finished preparing image.
+1725952248.434866, time consumption until now = 0.002409696578979492
+1725952248.460886, finished yolo5 based image det and seg.
+1725952248.4620917, time consumption until now = 0.02881002426147461
+1725952248.5176926, finished line det.
+1725952248.518885, time consumption until now = 0.08597087860107422
+1725952248.5200875, current weeder_pos = -0.003000000026077032
+1725952248.5212064, current weeder_speed = 0.0
+1725952248.5238466, finished sending weeder ctl.
+1725952248.524966, time consumption until now = 0.09163999557495117
+1725952248.5261467, ++++++++++++
+1725952248.5275083, start processing a new image.
+1725952248.5287764, using left camera image.
+1725952248.5323477, finished preparing image.
+1725952248.533541, time consumption until now = 0.002816438674926758
+1725952248.5558372, finished yolo5 based image det and seg.
+1725952248.5570457, time consumption until now = 0.027052640914916992
+1725952248.6124837, finished line det.
+1725952248.6136076, time consumption until now = 0.08405470848083496
+1725952248.614767, current weeder_pos = -0.003000000026077032
+1725952248.615948, current weeder_speed = 0.0
+1725952248.622634, finished sending weeder ctl.
+1725952248.623835, time consumption until now = 0.08978581428527832
+1725952248.6250107, ++++++++++++
+1725952248.6263535, start processing a new image.
+1725952248.6276407, using left camera image.
+1725952248.6316006, finished preparing image.
+1725952248.6328216, time consumption until now = 0.0029468536376953125
+1725952248.6555388, finished yolo5 based image det and seg.
+1725952248.6567347, time consumption until now = 0.027889490127563477
+1725952248.7125645, finished line det.
+1725952248.7137487, time consumption until now = 0.08526301383972168
+1725952248.7149634, current weeder_pos = -0.003000000026077032
+1725952248.7160826, current weeder_speed = 0.0
+1725952248.718667, finished sending weeder ctl.
+1725952248.719754, time consumption until now = 0.09095335006713867
+1725952248.720953, ++++++++++++
+1725952248.7221591, start processing a new image.
+1725952248.7233524, using left camera image.
+1725952248.7255063, finished preparing image.
+1725952248.7267218, time consumption until now = 0.002475738525390625
+1725952248.7433136, finished yolo5 based image det and seg.
+1725952248.7445514, time consumption until now = 0.02009415626525879
+1725952248.7988682, finished line det.
+1725952248.7999709, time consumption until now = 0.07573580741882324
+1725952248.8011508, current weeder_pos = -0.003000000026077032
+1725952248.8023195, current weeder_speed = 0.0
+1725952248.804989, finished sending weeder ctl.
+1725952248.80608, time consumption until now = 0.08126664161682129
+1725952248.807184, ++++++++++++
+1725952248.808421, start processing a new image.
+1725952248.8096454, using left camera image.
+1725952248.8116746, finished preparing image.
+1725952248.8128417, time consumption until now = 0.0025064945220947266
+1725952248.829054, finished yolo5 based image det and seg.
+1725952248.8302312, time consumption until now = 0.01960301399230957
+1725952248.8834121, finished line det.
+1725952248.8845952, time consumption until now = 0.07400131225585938
+1725952248.8858118, current weeder_pos = -0.003000000026077032
+1725952248.886927, current weeder_speed = 0.0
+1725952248.889609, finished sending weeder ctl.
+1725952248.8907907, time consumption until now = 0.07968568801879883
+1725952248.8919792, ++++++++++++
+1725952248.8932056, start processing a new image.
+1725952248.8943748, using left camera image.
+1725952248.8963103, finished preparing image.
+1725952248.8974924, time consumption until now = 0.002452850341796875
+1725952248.9136527, finished yolo5 based image det and seg.
+1725952248.9148421, time consumption until now = 0.019478559494018555
+1725952248.9693186, finished line det.
+1725952248.970415, time consumption until now = 0.0751194953918457
+1725952248.9715703, current weeder_pos = -0.003000000026077032
+1725952248.9728026, current weeder_speed = 0.0
+1725952248.975493, finished sending weeder ctl.
+1725952248.9766734, time consumption until now = 0.08080816268920898
+1725952248.9778674, ++++++++++++
+1725952248.9790726, start processing a new image.
+1725952248.9802673, using left camera image.
+1725952248.9822083, finished preparing image.
+1725952248.9833922, time consumption until now = 0.002466440200805664
+1725952248.9993396, finished yolo5 based image det and seg.
+1725952249.0005317, time consumption until now = 0.019228696823120117
+1725952249.054917, finished line det.
+1725952249.0560992, time consumption until now = 0.07491946220397949
+1725952249.0573165, current weeder_pos = -0.003000000026077032
+1725952249.058373, current weeder_speed = 0.0
+1725952249.0609148, finished sending weeder ctl.
+1725952249.0620215, time consumption until now = 0.08049678802490234
+1725952249.0631537, ++++++++++++
+1725952249.0643234, start processing a new image.
+1725952249.0654247, using left camera image.
+1725952249.069384, finished preparing image.
+1725952249.070602, time consumption until now = 0.002514362335205078
+1725952249.093367, finished yolo5 based image det and seg.
+1725952249.0944743, time consumption until now = 0.027882099151611328
+1725952249.1500297, finished line det.
+1725952249.1512153, time consumption until now = 0.0847630500793457
+1725952249.1524289, current weeder_pos = -0.003000000026077032
+1725952249.153555, current weeder_speed = 0.0
+1725952249.1561294, finished sending weeder ctl.
+1725952249.1572464, time consumption until now = 0.09042978286743164
+1725952249.1583426, ++++++++++++
+1725952249.1594894, start processing a new image.
+1725952249.1606193, using left camera image.
+1725952249.162639, finished preparing image.
+1725952249.1638002, time consumption until now = 0.0023508071899414062
+1725952249.1798108, finished yolo5 based image det and seg.
+1725952249.1810012, time consumption until now = 0.019375085830688477
+1725952249.2351432, finished line det.
+1725952249.2362626, time consumption until now = 0.07466745376586914
+1725952249.237417, current weeder_pos = -0.003000000026077032
+1725952249.2385974, current weeder_speed = 0.0
+1725952249.2412539, finished sending weeder ctl.
+1725952249.24236, time consumption until now = 0.08026695251464844
+1725952249.243533, ++++++++++++
+1725952249.2447367, start processing a new image.
+1725952249.2459273, using left camera image.
+1725952249.2478676, finished preparing image.
+1725952249.2490501, time consumption until now = 0.002466917037963867
+1725952249.2658553, finished yolo5 based image det and seg.
+1725952249.2669923, time consumption until now = 0.02013564109802246
+1725952249.3205478, finished line det.
+1725952249.3216696, time consumption until now = 0.07480978965759277
+1725952249.3229198, current weeder_pos = -0.003000000026077032
+1725952249.3240392, current weeder_speed = 0.0
+1725952249.3268402, finished sending weeder ctl.
+1725952249.3279276, time consumption until now = 0.080474853515625
+1725952249.329055, ++++++++++++
+1725952249.3301961, start processing a new image.
+1725952249.3313885, using left camera image.
+1725952249.3333282, finished preparing image.
+1725952249.3344133, time consumption until now = 0.0024733543395996094
+1725952249.3506176, finished yolo5 based image det and seg.
+1725952249.3517978, time consumption until now = 0.019370079040527344
+1725952249.4062958, finished line det.
+1725952249.40739, time consumption until now = 0.07513880729675293
+1725952249.4086456, current weeder_pos = -0.003000000026077032
+1725952249.4098384, current weeder_speed = 0.0
+1725952249.4124196, finished sending weeder ctl.
+1725952249.4135091, time consumption until now = 0.08074617385864258
+1725952249.4146342, ++++++++++++
+1725952249.4158154, start processing a new image.
+1725952249.4170299, using left camera image.
+1725952249.4189951, finished preparing image.
+1725952249.4200823, time consumption until now = 0.002442598342895508
+1725952249.4355645, finished yolo5 based image det and seg.
+1725952249.4366548, time consumption until now = 0.01881098747253418
+1725952249.4928966, finished line det.
+1725952249.4940832, time consumption until now = 0.07611393928527832
+1725952249.4952028, current weeder_pos = -0.003000000026077032
+1725952249.4963193, current weeder_speed = 0.0
+1725952249.4988263, finished sending weeder ctl.
+1725952249.5000002, time consumption until now = 0.08164072036743164
+1725952249.5010993, ++++++++++++
+1725952249.502259, start processing a new image.
+1725952249.5033906, using left camera image.
+1725952249.5055532, finished preparing image.
+1725952249.5066695, time consumption until now = 0.002365589141845703
+1725952249.524778, finished yolo5 based image det and seg.
+1725952249.5259674, time consumption until now = 0.02154707908630371
+1725952249.580022, finished line det.
+1725952249.5812037, time consumption until now = 0.0767984390258789
+1725952249.5823278, current weeder_pos = -0.003000000026077032
+1725952249.5834494, current weeder_speed = 0.0
+1725952249.5860648, finished sending weeder ctl.
+1725952249.5871577, time consumption until now = 0.08232498168945312
+1725952249.588253, ++++++++++++
+1725952249.5893676, start processing a new image.
+1725952249.5904965, using left camera image.
+1725952249.594617, finished preparing image.
+1725952249.5958753, time consumption until now = 0.0025708675384521484
+1725952249.6193876, finished yolo5 based image det and seg.
+1725952249.6204865, time consumption until now = 0.02560710906982422
+1725952249.6745632, finished line det.
+1725952249.675748, time consumption until now = 0.08421850204467773
+1725952249.6769667, current weeder_pos = -0.003000000026077032
+1725952249.6781485, current weeder_speed = 0.0
+1725952249.6807666, finished sending weeder ctl.
+1725952249.6819494, time consumption until now = 0.0899813175201416
+1725952249.6831634, ++++++++++++
+1725952249.684343, start processing a new image.
+1725952249.68549, using left camera image.
+1725952249.6895435, finished preparing image.
+1725952249.6907525, time consumption until now = 0.0025506019592285156
+1725952249.7133846, finished yolo5 based image det and seg.
+1725952249.7145126, time consumption until now = 0.027863740921020508
+1725952249.7699003, finished line det.
+1725952249.7709928, time consumption until now = 0.08448052406311035
+1725952249.7721124, current weeder_pos = -0.003000000026077032
+1725952249.7732904, current weeder_speed = 0.0
+1725952249.7757916, finished sending weeder ctl.
+1725952249.776976, time consumption until now = 0.09002327919006348
+1725952249.7781577, ++++++++++++
+1725952249.7793615, start processing a new image.
+1725952249.7805572, using left camera image.
+1725952249.7825584, finished preparing image.
+1725952249.7836711, time consumption until now = 0.0024721622467041016
+1725952249.7998538, finished yolo5 based image det and seg.
+1725952249.80095, time consumption until now = 0.019446611404418945
+1725952249.8551838, finished line det.
+1725952249.8563673, time consumption until now = 0.07477259635925293
+1725952249.8575854, current weeder_pos = -0.003000000026077032
+1725952249.858767, current weeder_speed = 0.0
+1725952249.8613856, finished sending weeder ctl.
+1725952249.8624732, time consumption until now = 0.08060836791992188
+1725952249.8636022, ++++++++++++
+1725952249.8648274, start processing a new image.
+1725952249.8660295, using left camera image.
+1725952249.870079, finished preparing image.
+1725952249.8712637, time consumption until now = 0.002747774124145508
+1725952249.8941796, finished yolo5 based image det and seg.
+1725952249.8953967, time consumption until now = 0.02806401252746582
+1725952249.965083, finished line det.
+1725952249.9662716, time consumption until now = 0.09921073913574219
+1725952249.9674866, current weeder_pos = -0.003000000026077032
+1725952249.96867, current weeder_speed = 0.0
+1725952249.971304, finished sending weeder ctl.
+1725952249.9724195, time consumption until now = 0.10497522354125977
+1725952249.9735446, ++++++++++++
+1725952249.9746866, start processing a new image.
+1725952249.9758232, using left camera image.
+1725952249.977703, finished preparing image.
+1725952249.978883, time consumption until now = 0.002340555191040039
+1725952249.9955256, finished yolo5 based image det and seg.
+1725952249.9967053, time consumption until now = 0.019868135452270508
+1725952250.0512133, finished line det.
+1725952250.0523908, time consumption until now = 0.07556033134460449
+1725952250.053588, current weeder_pos = -0.003000000026077032
+1725952250.0546863, current weeder_speed = 0.0
+1725952250.0573595, finished sending weeder ctl.
+1725952250.0584474, time consumption until now = 0.08110618591308594
+1725952250.0596244, ++++++++++++
+1725952250.0608084, start processing a new image.
+1725952250.061958, using left camera image.
+1725952250.0639904, finished preparing image.
+1725952250.0651748, time consumption until now = 0.0024399757385253906
+1725952250.0816588, finished yolo5 based image det and seg.
+1725952250.0828447, time consumption until now = 0.01984691619873047
+1725952250.1371896, finished line det.
+1725952250.1383018, time consumption until now = 0.0754852294921875
+1725952250.1395216, current weeder_pos = -0.003000000026077032
+1725952250.1407034, current weeder_speed = 0.0
+1725952250.1433356, finished sending weeder ctl.
+1725952250.1444542, time consumption until now = 0.08109140396118164
+1725952250.1455798, ++++++++++++
+1725952250.1467738, start processing a new image.
+1725952250.1479073, using left camera image.
+1725952250.149843, finished preparing image.
+1725952250.1510234, time consumption until now = 0.002314329147338867
+1725952250.1668198, finished yolo5 based image det and seg.
+1725952250.1680076, time consumption until now = 0.019073009490966797
+1725952250.2223327, finished line det.
+1725952250.2235208, time consumption until now = 0.0746004581451416
+1725952250.2247372, current weeder_pos = -0.003000000026077032
+1725952250.2258263, current weeder_speed = 0.0
+1725952250.2283924, finished sending weeder ctl.
+1725952250.2295392, time consumption until now = 0.08025002479553223
+1725952250.2307305, ++++++++++++
+1725952250.2319334, start processing a new image.
+1725952250.2331266, using left camera image.
+1725952250.235056, finished preparing image.
+1725952250.2361462, time consumption until now = 0.0024704933166503906
+1725952250.2522812, finished yolo5 based image det and seg.
+1725952250.2533734, time consumption until now = 0.01933884620666504
+1725952250.3079324, finished line det.
+1725952250.3091114, time consumption until now = 0.07508420944213867
+1725952250.3102758, current weeder_pos = -0.003000000026077032
+1725952250.311378, current weeder_speed = 0.0
+1725952250.3139844, finished sending weeder ctl.
+1725952250.315148, time consumption until now = 0.08062171936035156
+1725952250.3163507, ++++++++++++
+1725952250.317627, start processing a new image.
+1725952250.3188615, using left camera image.
+1725952250.3225293, finished preparing image.
+1725952250.323739, time consumption until now = 0.0027992725372314453
+1725952250.3451006, finished yolo5 based image det and seg.
+1725952250.3462975, time consumption until now = 0.026317358016967773
+1725952250.40139, finished line det.
+1725952250.4025743, time consumption until now = 0.08286428451538086
+1725952250.4037268, current weeder_pos = -0.003000000026077032
+1725952250.4049094, current weeder_speed = 0.0
+1725952250.4074872, finished sending weeder ctl.
+1725952250.4086552, time consumption until now = 0.08840346336364746
+1725952250.4098647, ++++++++++++
+1725952250.4111428, start processing a new image.
+1725952250.4124043, using left camera image.
+1725952250.4163005, finished preparing image.
+1725952250.417516, time consumption until now = 0.0028409957885742188
+1725952250.4391859, finished yolo5 based image det and seg.
+1725952250.4403317, time consumption until now = 0.026731491088867188
+1725952250.4950688, finished line det.
+1725952250.4962502, time consumption until now = 0.08307266235351562
+1725952250.497613, current weeder_pos = -0.003000000026077032
+1725952250.4987383, current weeder_speed = 0.0
+1725952250.50221, finished sending weeder ctl.
+1725952250.5033855, time consumption until now = 0.08884453773498535
+1725952250.5045512, ++++++++++++
+1725952250.5057878, start processing a new image.
+1725952250.5070045, using left camera image.
+1725952250.5089893, finished preparing image.
+1725952250.5101676, time consumption until now = 0.002457857131958008
+1725952250.5263104, finished yolo5 based image det and seg.
+1725952250.5274959, time consumption until now = 0.01950812339782715
+1725952250.5816169, finished line det.
+1725952250.5828037, time consumption until now = 0.07491111755371094
+1725952250.5840216, current weeder_pos = -0.003000000026077032
+1725952250.5852053, current weeder_speed = 0.0
+1725952250.5877619, finished sending weeder ctl.
+1725952250.5889432, time consumption until now = 0.08051276206970215
+1725952250.5900862, ++++++++++++
+1725952250.5912914, start processing a new image.
+1725952250.5924833, using left camera image.
+1725952250.5944335, finished preparing image.
+1725952250.595557, time consumption until now = 0.0024602413177490234
+1725952250.6121345, finished yolo5 based image det and seg.
+1725952250.613318, time consumption until now = 0.019879817962646484
+1725952250.6670773, finished line det.
+1725952250.6682649, time consumption until now = 0.07480669021606445
+1725952250.66948, current weeder_pos = -0.003000000026077032
+1725952250.6705964, current weeder_speed = 0.0
+1725952250.6731088, finished sending weeder ctl.
+1725952250.6742241, time consumption until now = 0.08050370216369629
+1725952250.675333, ++++++++++++
+1725952250.6765459, start processing a new image.
+1725952250.6778336, using left camera image.
+1725952250.681531, finished preparing image.
+1725952250.6827567, time consumption until now = 0.002817392349243164
+1725952250.7043982, finished yolo5 based image det and seg.
+1725952250.7055402, time consumption until now = 0.02666616439819336
+1725952250.7605863, finished line det.
+1725952250.761775, time consumption until now = 0.0829155445098877
+1725952250.7629895, current weeder_pos = -0.003000000026077032
+1725952250.7640994, current weeder_speed = 0.0
+1725952250.7666452, finished sending weeder ctl.
+1725952250.7678244, time consumption until now = 0.08877682685852051
+1725952250.7690134, ++++++++++++
+1725952250.770124, start processing a new image.
+1725952250.7712173, using left camera image.
+1725952250.773187, finished preparing image.
+1725952250.774336, time consumption until now = 0.0023467540740966797
+1725952250.790061, finished yolo5 based image det and seg.
+1725952250.7911851, time consumption until now = 0.018895626068115234
+1725952250.8450735, finished line det.
+1725952250.8461936, time consumption until now = 0.07398867607116699
+1725952250.8473547, current weeder_pos = -0.003000000026077032
+1725952250.848539, current weeder_speed = 0.0
+1725952250.8512065, finished sending weeder ctl.
+1725952250.8523855, time consumption until now = 0.07962417602539062
+1725952250.8535295, ++++++++++++
+1725952250.8547406, start processing a new image.
+1725952250.8559053, using left camera image.
+1725952250.8580647, finished preparing image.
+1725952250.8591835, time consumption until now = 0.002410411834716797
+1725952250.8749268, finished yolo5 based image det and seg.
+1725952250.876114, time consumption until now = 0.019226789474487305
+1725952250.9298453, finished line det.
+1725952250.9310052, time consumption until now = 0.07415509223937988
+1725952250.9321284, current weeder_pos = -0.003000000026077032
+1725952250.9333112, current weeder_speed = 0.0
+1725952250.9357266, finished sending weeder ctl.
+1725952250.9368134, time consumption until now = 0.07965683937072754
+1725952250.9379313, ++++++++++++
+1725952250.9391375, start processing a new image.
+1725952250.940231, using left camera image.
+1725952250.94217, finished preparing image.
+1725952250.9433515, time consumption until now = 0.0023610591888427734
+1725952250.9604664, finished yolo5 based image det and seg.
+1725952250.9615862, time consumption until now = 0.02034306526184082
+1725952251.0154567, finished line det.
+1725952251.0165842, time consumption until now = 0.07519149780273438
+1725952251.0177407, current weeder_pos = -0.003000000026077032
+1725952251.0189347, current weeder_speed = 0.0
+1725952251.0215063, finished sending weeder ctl.
+1725952251.0226362, time consumption until now = 0.08089828491210938
+1725952251.0238197, ++++++++++++
+1725952251.0250146, start processing a new image.
+1725952251.0262055, using left camera image.
+1725952251.0281408, finished preparing image.
+1725952251.029264, time consumption until now = 0.0024690628051757812
+1725952251.0447137, finished yolo5 based image det and seg.
+1725952251.0458095, time consumption until now = 0.01884007453918457
+1725952251.0995426, finished line det.
+1725952251.1007264, time consumption until now = 0.07361268997192383
+1725952251.1019173, current weeder_pos = -0.003000000026077032
+1725952251.1030028, current weeder_speed = 0.0
+1725952251.1055381, finished sending weeder ctl.
+1725952251.1067157, time consumption until now = 0.07918810844421387
+1725952251.10791, ++++++++++++
+1725952251.1090243, start processing a new image.
+1725952251.1101532, using left camera image.
+1725952251.1121964, finished preparing image.
+1725952251.1133158, time consumption until now = 0.0023555755615234375
+1725952251.129676, finished yolo5 based image det and seg.
+1725952251.1309235, time consumption until now = 0.01965498924255371
+1725952251.1848528, finished line det.
+1725952251.186037, time consumption until now = 0.07487177848815918
+1725952251.18723, current weeder_pos = -0.003000000026077032
+1725952251.188413, current weeder_speed = 0.0
+1725952251.1911235, finished sending weeder ctl.
+1725952251.1922414, time consumption until now = 0.08052802085876465
+1725952251.193334, ++++++++++++
+1725952251.1944366, start processing a new image.
+1725952251.1955898, using left camera image.
+1725952251.1993952, finished preparing image.
+1725952251.2006536, time consumption until now = 0.002526521682739258
+1725952251.2191887, finished yolo5 based image det and seg.
+1725952251.2203023, time consumption until now = 0.023736000061035156
+1725952251.2744226, finished line det.
+1725952251.2756057, time consumption until now = 0.07888031005859375
+1725952251.2768211, current weeder_pos = -0.003000000026077032
+1725952251.277942, current weeder_speed = 0.0
+1725952251.280472, finished sending weeder ctl.
+1725952251.281647, time consumption until now = 0.08463835716247559
+1725952251.2827408, ++++++++++++
+1725952251.2839441, start processing a new image.
+1725952251.2851348, using left camera image.
+1725952251.2870831, finished preparing image.
+1725952251.2882426, time consumption until now = 0.0024709701538085938
+1725952251.3041666, finished yolo5 based image det and seg.
+1725952251.305291, time consumption until now = 0.019179344177246094
+1725952251.3595066, finished line det.
+1725952251.3606272, time consumption until now = 0.0746309757232666
+1725952251.3617823, current weeder_pos = -0.003000000026077032
+1725952251.3629043, current weeder_speed = 0.0
+1725952251.3654418, finished sending weeder ctl.
+1725952251.3665617, time consumption until now = 0.0800931453704834
+1725952251.3676872, ++++++++++++
+1725952251.3688302, start processing a new image.
+1725952251.3699594, using left camera image.
+1725952251.3720944, finished preparing image.
+1725952251.3732748, time consumption until now = 0.0023589134216308594
+1725952251.3893178, finished yolo5 based image det and seg.
+1725952251.3904092, time consumption until now = 0.019466161727905273
+1725952251.4442914, finished line det.
+1725952251.4453814, time consumption until now = 0.0744485855102539
+1725952251.446517, current weeder_pos = -0.003000000026077032
+1725952251.4476314, current weeder_speed = 0.0
+1725952251.4501755, finished sending weeder ctl.
+1725952251.4513047, time consumption until now = 0.07990765571594238
+1725952251.45243, ++++++++++++
+1725952251.4535756, start processing a new image.
+1725952251.4547057, using left camera image.
+1725952251.4567966, finished preparing image.
+1725952251.4579134, time consumption until now = 0.0023589134216308594
+1725952251.4745963, finished yolo5 based image det and seg.
+1725952251.475786, time consumption until now = 0.020048141479492188
+1725952251.530468, finished line det.
+1725952251.5315595, time consumption until now = 0.07589316368103027
+1725952251.5326943, current weeder_pos = -0.003000000026077032
+1725952251.5337832, current weeder_speed = 0.0
+1725952251.5363736, finished sending weeder ctl.
+1725952251.5374906, time consumption until now = 0.08130073547363281
+1725952251.5386112, ++++++++++++
+1725952251.5397544, start processing a new image.
+1725952251.5408897, using left camera image.
+1725952251.5427601, finished preparing image.
+1725952251.5439336, time consumption until now = 0.0023484230041503906
+1725952251.5598228, finished yolo5 based image det and seg.
+1725952251.5609462, time consumption until now = 0.019037485122680664
+1725952251.6153522, finished line det.
+1725952251.6165445, time consumption until now = 0.07462859153747559
+1725952251.6177027, current weeder_pos = -0.003000000026077032
+1725952251.6188862, current weeder_speed = 0.0
+1725952251.6214983, finished sending weeder ctl.
+1725952251.6226168, time consumption until now = 0.08025908470153809
+1725952251.6237433, ++++++++++++
+1725952251.6249478, start processing a new image.
+1725952251.626138, using left camera image.
+1725952251.6282015, finished preparing image.
+1725952251.6293921, time consumption until now = 0.0024712085723876953
+1725952251.6452944, finished yolo5 based image det and seg.
+1725952251.6464, time consumption until now = 0.019402027130126953
+1725952251.7147207, finished line det.
+1725952251.7159045, time consumption until now = 0.08880448341369629
+1725952251.7171204, current weeder_pos = -0.003000000026077032
+1725952251.718305, current weeder_speed = 0.0
+1725952251.7208674, finished sending weeder ctl.
+1725952251.722011, time consumption until now = 0.0945439338684082
+1725952251.7232003, ++++++++++++
+1725952251.7244043, start processing a new image.
+1725952251.725533, using left camera image.
+1725952251.7294433, finished preparing image.
+1725952251.7307012, time consumption until now = 0.0025267601013183594
+1725952251.752926, finished yolo5 based image det and seg.
+1725952251.7540593, time consumption until now = 0.02734661102294922
+1725952251.808974, finished line det.
+1725952251.8101585, time consumption until now = 0.0836176872253418
+1725952251.811375, current weeder_pos = -0.003000000026077032
+1725952251.8125572, current weeder_speed = 0.0
+1725952251.815212, finished sending weeder ctl.
+1725952251.816395, time consumption until now = 0.08934926986694336
+1725952251.817683, ++++++++++++
+1725952251.8188858, start processing a new image.
+1725952251.820057, using left camera image.
+1725952251.8223968, finished preparing image.
+1725952251.8236957, time consumption until now = 0.002492666244506836
+1725952251.8404799, finished yolo5 based image det and seg.
+1725952251.8416343, time consumption until now = 0.020631074905395508
+1725952251.909838, finished line det.
+1725952251.9110239, time consumption until now = 0.09002256393432617
+1725952251.9122467, current weeder_pos = -0.003000000026077032
+1725952251.9134305, current weeder_speed = 0.0
+1725952251.9160793, finished sending weeder ctl.
+1725952251.917263, time consumption until now = 0.09574103355407715
+1725952251.9183621, ++++++++++++
+1725952251.9195797, start processing a new image.
+1725952251.920712, using left camera image.
+1725952251.9227896, finished preparing image.
+1725952251.923975, time consumption until now = 0.002412080764770508
+1725952251.9401402, finished yolo5 based image det and seg.
+1725952251.941435, time consumption until now = 0.0195772647857666
+1725952251.9965494, finished line det.
+1725952251.997671, time consumption until now = 0.07591676712036133
+1725952251.9988017, current weeder_pos = -0.003000000026077032
+1725952251.9999206, current weeder_speed = 0.0
+1725952252.003505, finished sending weeder ctl.
+1725952252.0046158, time consumption until now = 0.08149909973144531
+1725952252.005755, ++++++++++++
+1725952252.0069585, start processing a new image.
+1725952252.0081365, using left camera image.
+1725952252.0103252, finished preparing image.
+1725952252.011417, time consumption until now = 0.0024275779724121094
+1725952252.028099, finished yolo5 based image det and seg.
+1725952252.0292246, time consumption until now = 0.02008342742919922
+1725952252.0827336, finished line det.
+1725952252.083918, time consumption until now = 0.0748298168182373
+1725952252.0850701, current weeder_pos = -0.003000000026077032
+1725952252.0861888, current weeder_speed = 0.0
+1725952252.0888126, finished sending weeder ctl.
+1725952252.0899808, time consumption until now = 0.08037972450256348
+1725952252.0911477, ++++++++++++
+1725952252.0922956, start processing a new image.
+1725952252.0933893, using left camera image.
+1725952252.095309, finished preparing image.
+1725952252.0964298, time consumption until now = 0.0022950172424316406
+1725952252.1124086, finished yolo5 based image det and seg.
+1725952252.113593, time consumption until now = 0.019147396087646484
+1725952252.1672244, finished line det.
+1725952252.168354, time consumption until now = 0.07393383979797363
+1725952252.169719, current weeder_pos = -0.003000000026077032
+1725952252.1708755, current weeder_speed = 0.0
+1725952252.1736977, finished sending weeder ctl.
+1725952252.1748812, time consumption until now = 0.07975625991821289
+1725952252.1760774, ++++++++++++
+1725952252.177287, start processing a new image.
+1725952252.178382, using left camera image.
+1725952252.1803663, finished preparing image.
+1725952252.1815457, time consumption until now = 0.0023784637451171875
+1725952252.1974032, finished yolo5 based image det and seg.
+1725952252.1984932, time consumption until now = 0.019147634506225586
+1725952252.2521472, finished line det.
+1725952252.2532694, time consumption until now = 0.07387137413024902
+1725952252.2543962, current weeder_pos = -0.003000000026077032
+1725952252.2555785, current weeder_speed = 0.0
+1725952252.2582476, finished sending weeder ctl.
+1725952252.2594686, time consumption until now = 0.07948827743530273
+1725952252.2607663, ++++++++++++
+1725952252.2620304, start processing a new image.
+1725952252.2632, using left camera image.
+1725952252.2656193, finished preparing image.
+1725952252.2668068, time consumption until now = 0.0024847984313964844
+1725952252.283244, finished yolo5 based image det and seg.
+1725952252.28437, time consumption until now = 0.020203828811645508
+1725952252.3379219, finished line det.
+1725952252.3391047, time consumption until now = 0.0749514102935791
+1725952252.3403013, current weeder_pos = -0.003000000026077032
+1725952252.341489, current weeder_speed = 0.0
+1725952252.3440294, finished sending weeder ctl.
+1725952252.3452141, time consumption until now = 0.08065581321716309
+1725952252.3463442, ++++++++++++
+1725952252.3475296, start processing a new image.
+1725952252.3487213, using left camera image.
+1725952252.3506758, finished preparing image.
+1725952252.351865, time consumption until now = 0.0024971961975097656
+1725952252.3674529, finished yolo5 based image det and seg.
+1725952252.3686383, time consumption until now = 0.018962621688842773
+1725952252.422457, finished line det.
+1725952252.4237585, time consumption until now = 0.07394576072692871
+1725952252.4250407, current weeder_pos = -0.003000000026077032
+1725952252.4262373, current weeder_speed = 0.0
+1725952252.4299505, finished sending weeder ctl.
+1725952252.4310443, time consumption until now = 0.08004164695739746
+1725952252.4321327, ++++++++++++
+1725952252.4332318, start processing a new image.
+1725952252.434322, using left camera image.
+1725952252.4363492, finished preparing image.
+1725952252.4374714, time consumption until now = 0.0023806095123291016
+1725952252.4528768, finished yolo5 based image det and seg.
+1725952252.4540036, time consumption until now = 0.01870441436767578
+1725952252.5078, finished line det.
+1725952252.5089848, time consumption until now = 0.07362198829650879
+1725952252.510157, current weeder_pos = -0.003000000026077032
+1725952252.5113113, current weeder_speed = 0.0
+1725952252.513873, finished sending weeder ctl.
+1725952252.515109, time consumption until now = 0.07927608489990234
+1725952252.5162992, ++++++++++++
+1725952252.5174422, start processing a new image.
+1725952252.5185404, using left camera image.
+1725952252.5204427, finished preparing image.
+1725952252.521561, time consumption until now = 0.002360820770263672
+1725952252.537579, finished yolo5 based image det and seg.
+1725952252.5387058, time consumption until now = 0.019193410873413086
+1725952252.5923796, finished line det.
+1725952252.5936258, time consumption until now = 0.07396769523620605
+1725952252.5948997, current weeder_pos = -0.003000000026077032
+1725952252.5960808, current weeder_speed = 0.0
+1725952252.5989873, finished sending weeder ctl.
+1725952252.6001072, time consumption until now = 0.07981348037719727
+1725952252.6012323, ++++++++++++
+1725952252.6023216, start processing a new image.
+1725952252.603515, using left camera image.
+1725952252.6054356, finished preparing image.
+1725952252.6066751, time consumption until now = 0.0023899078369140625
+1725952252.6223183, finished yolo5 based image det and seg.
+1725952252.6234145, time consumption until now = 0.018877506256103516
+1725952252.6770191, finished line det.
+1725952252.6782033, time consumption until now = 0.07375097274780273
+1725952252.6794267, current weeder_pos = -0.003000000026077032
+1725952252.680546, current weeder_speed = 0.0
+1725952252.683156, finished sending weeder ctl.
+1725952252.6843362, time consumption until now = 0.0794217586517334
+1725952252.6855273, ++++++++++++
+1725952252.6866367, start processing a new image.
+1725952252.687765, using left camera image.
+1725952252.6896632, finished preparing image.
+1725952252.6907952, time consumption until now = 0.0023376941680908203
+1725952252.7065692, finished yolo5 based image det and seg.
+1725952252.707761, time consumption until now = 0.01895451545715332
+1725952252.7617083, finished line det.
+1725952252.7628384, time consumption until now = 0.0740044116973877
+1725952252.7639933, current weeder_pos = -0.003000000026077032
+1725952252.7651114, current weeder_speed = 0.0
+1725952252.7680645, finished sending weeder ctl.
+1725952252.7691903, time consumption until now = 0.07961511611938477
+1725952252.7702897, ++++++++++++
+1725952252.7714393, start processing a new image.
+1725952252.7725677, using left camera image.
+1725952252.7747025, finished preparing image.
+1725952252.7758203, time consumption until now = 0.0023622512817382812
+1725952252.7925458, finished yolo5 based image det and seg.
+1725952252.793731, time consumption until now = 0.020127296447753906
+1725952252.8473763, finished line det.
+1725952252.8485608, time consumption until now = 0.0749969482421875
+1725952252.8499272, current weeder_pos = -0.003000000026077032
+1725952252.85109, current weeder_speed = 0.0
+1725952252.8570783, finished sending weeder ctl.
+1725952252.8582802, time consumption until now = 0.08087825775146484
+1725952252.8595161, ++++++++++++
+1725952252.860797, start processing a new image.
+1725952252.8620086, using left camera image.
+1725952252.8647327, finished preparing image.
+1725952252.865908, time consumption until now = 0.002595186233520508
+1725952252.8839257, finished yolo5 based image det and seg.
+1725952252.8850532, time consumption until now = 0.021986961364746094
+1725952252.9391167, finished line det.
+1725952252.9402404, time consumption until now = 0.07738018035888672
+1725952252.9413977, current weeder_pos = -0.003000000026077032
+1725952252.9424853, current weeder_speed = 0.0
+1725952252.9450252, finished sending weeder ctl.
+1725952252.9461405, time consumption until now = 0.08290863037109375
+1725952252.9473174, ++++++++++++
+1725952252.9485226, start processing a new image.
+1725952252.9496982, using left camera image.
+1725952252.951658, finished preparing image.
+1725952252.9528408, time consumption until now = 0.002439260482788086
+1725952252.9685109, finished yolo5 based image det and seg.
+1725952252.9696405, time consumption until now = 0.019072532653808594
+1725952253.0233269, finished line det.
+1725952253.0245185, time consumption until now = 0.07387232780456543
+1725952253.025668, current weeder_pos = -0.003000000026077032
+1725952253.0267847, current weeder_speed = 0.0
+1725952253.029422, finished sending weeder ctl.
+1725952253.0305054, time consumption until now = 0.07939624786376953
+1725952253.0316963, ++++++++++++
+1725952253.0329025, start processing a new image.
+1725952253.0340703, using left camera image.
+1725952253.0359492, finished preparing image.
+1725952253.037034, time consumption until now = 0.0024275779724121094
+1725952253.0524154, finished yolo5 based image det and seg.
+1725952253.053505, time consumption until now = 0.018616676330566406
+1725952253.1070342, finished line det.
+1725952253.1082184, time consumption until now = 0.0731954574584961
+1725952253.1093392, current weeder_pos = -0.003000000026077032
+1725952253.1104271, current weeder_speed = 0.0
+1725952253.1129713, finished sending weeder ctl.
+1725952253.1140854, time consumption until now = 0.0787210464477539
+1725952253.115274, ++++++++++++
+1725952253.1164768, start processing a new image.
+1725952253.1176035, using left camera image.
+1725952253.1195729, finished preparing image.
+1725952253.1206968, time consumption until now = 0.0024132728576660156
+1725952253.1361768, finished yolo5 based image det and seg.
+1725952253.137312, time consumption until now = 0.018773317337036133
+1725952253.1911247, finished line det.
+1725952253.1922507, time consumption until now = 0.07362508773803711
+1725952253.1934023, current weeder_pos = -0.003000000026077032
+1725952253.1945813, current weeder_speed = 0.0
+1725952253.1970713, finished sending weeder ctl.
+1725952253.1982546, time consumption until now = 0.07923746109008789
+1725952253.199375, ++++++++++++
+1725952253.200529, start processing a new image.
+1725952253.2017195, using left camera image.
+1725952253.2036078, finished preparing image.
+1725952253.204727, time consumption until now = 0.0024170875549316406
+1725952253.2203264, finished yolo5 based image det and seg.
+1725952253.221451, time consumption until now = 0.018813610076904297
+1725952253.2752316, finished line det.
+1725952253.2764175, time consumption until now = 0.07373666763305664
+1725952253.2776334, current weeder_pos = -0.003000000026077032
+1725952253.2788148, current weeder_speed = 0.0
+1725952253.2813578, finished sending weeder ctl.
+1725952253.2825367, time consumption until now = 0.0794823169708252
+1725952253.2838464, ++++++++++++
+1725952253.2850478, start processing a new image.
+1725952253.2862008, using left camera image.
+1725952253.2885103, finished preparing image.
+1725952253.2896032, time consumption until now = 0.002424478530883789
+1725952253.3053074, finished yolo5 based image det and seg.
+1725952253.3064005, time consumption until now = 0.01923394203186035
+1725952253.3600433, finished line det.
+1725952253.361234, time consumption until now = 0.07410979270935059
+1725952253.3623323, current weeder_pos = -0.0020000000949949026
+1725952253.363521, current weeder_speed = 0.0
+1725952253.3660624, finished sending weeder ctl.
+1725952253.3672433, time consumption until now = 0.07967185974121094
+1725952253.3684297, ++++++++++++
+1725952253.3695827, start processing a new image.
+1725952253.3707137, using left camera image.
+1725952253.3726223, finished preparing image.
+1725952253.3738012, time consumption until now = 0.0023436546325683594
+1725952253.389382, finished yolo5 based image det and seg.
+1725952253.390472, time consumption until now = 0.018842697143554688
+1725952253.4465995, finished line det.
+1725952253.4477274, time consumption until now = 0.07607078552246094
+1725952253.4488502, current weeder_pos = -0.003000000026077032
+1725952253.4500391, current weeder_speed = 0.0
+1725952253.4525378, finished sending weeder ctl.
+1725952253.4536538, time consumption until now = 0.08159136772155762
+1725952253.4548416, ++++++++++++
+1725952253.455983, start processing a new image.
+1725952253.4571724, using left camera image.
+1725952253.459144, finished preparing image.
+1725952253.460321, time consumption until now = 0.002474546432495117
+1725952253.4765754, finished yolo5 based image det and seg.
+1725952253.477761, time consumption until now = 0.019649505615234375
+1725952253.5343835, finished line det.
+1725952253.5355725, time consumption until now = 0.07756400108337402
+1725952253.5367887, current weeder_pos = -0.003000000026077032
+1725952253.537974, current weeder_speed = 0.0
+1725952253.5404987, finished sending weeder ctl.
+1725952253.5416794, time consumption until now = 0.0831899642944336
+1725952253.5428696, ++++++++++++
+1725952253.5440745, start processing a new image.
+1725952253.5452695, using left camera image.
+1725952253.5470946, finished preparing image.
+1725952253.5482833, time consumption until now = 0.002368927001953125
+1725952253.5647094, finished yolo5 based image det and seg.
+1725952253.5658033, time consumption until now = 0.01961231231689453
+1725952253.6206653, finished line det.
+1725952253.6218374, time consumption until now = 0.07553768157958984
+1725952253.6230583, current weeder_pos = -0.003000000026077032
+1725952253.6242425, current weeder_speed = 0.0
+1725952253.6268258, finished sending weeder ctl.
+1725952253.6279402, time consumption until now = 0.0812993049621582
+1725952253.6290398, ++++++++++++
+1725952253.6302903, start processing a new image.
+1725952253.6314917, using left camera image.
+1725952253.6333952, finished preparing image.
+1725952253.6344786, time consumption until now = 0.002470254898071289
+1725952253.6507797, finished yolo5 based image det and seg.
+1725952253.6518717, time consumption until now = 0.019510984420776367
+1725952253.7060268, finished line det.
+1725952253.7072124, time consumption until now = 0.07483816146850586
+1725952253.70842, current weeder_pos = -0.003000000026077032
+1725952253.709603, current weeder_speed = 0.0
+1725952253.7121744, finished sending weeder ctl.
+1725952253.71335, time consumption until now = 0.08051419258117676
+1725952253.7144423, ++++++++++++
+1725952253.7156513, start processing a new image.
+1725952253.716844, using left camera image.
+1725952253.7188122, finished preparing image.
+1725952253.7198987, time consumption until now = 0.0024535655975341797
+1725952253.7368224, finished yolo5 based image det and seg.
+1725952253.7380106, time consumption until now = 0.020139455795288086
+1725952253.794485, finished line det.
+1725952253.7955742, time consumption until now = 0.07787179946899414
+1725952253.7967937, current weeder_pos = -0.003000000026077032
+1725952253.7979765, current weeder_speed = 0.0
+1725952253.8005464, finished sending weeder ctl.
+1725952253.80169, time consumption until now = 0.08352351188659668
+1725952253.8028781, ++++++++++++
+1725952253.804022, start processing a new image.
+1725952253.8051872, using left camera image.
+1725952253.807151, finished preparing image.
+1725952253.808237, time consumption until now = 0.0024318695068359375
+1725952253.8236792, finished yolo5 based image det and seg.
+1725952253.824769, time consumption until now = 0.018784284591674805
+1725952253.8941717, finished line det.
+1725952253.8952646, time consumption until now = 0.08921980857849121
+1725952253.8964503, current weeder_pos = -0.003000000026077032
+1725952253.8976126, current weeder_speed = 0.0
+1725952253.9028752, finished sending weeder ctl.
+1725952253.9040596, time consumption until now = 0.0947716236114502
+1725952253.9052634, ++++++++++++
+1725952253.9064724, start processing a new image.
+1725952253.9076588, using left camera image.
+1725952253.9104288, finished preparing image.
+1725952253.911626, time consumption until now = 0.002505064010620117
+1725952253.9296224, finished yolo5 based image det and seg.
+1725952253.9308054, time consumption until now = 0.022011518478393555
+1725952253.9837446, finished line det.
+1725952253.9848633, time consumption until now = 0.07642054557800293
+1725952253.9860792, current weeder_pos = -0.003000000026077032
+1725952253.9871686, current weeder_speed = 0.0
+1725952253.9898183, finished sending weeder ctl.
+1725952253.9909482, time consumption until now = 0.08184075355529785
+1725952253.9921348, ++++++++++++
+1725952253.9933386, start processing a new image.
+1725952253.9944346, using left camera image.
+1725952253.9963815, finished preparing image.
+1725952253.9975646, time consumption until now = 0.0023779869079589844
+1725952254.0136023, finished yolo5 based image det and seg.
+1725952254.0146909, time consumption until now = 0.019297122955322266

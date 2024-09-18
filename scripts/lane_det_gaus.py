@@ -592,13 +592,21 @@ class lane_detector:
         lines_u_d = lines[0, :]
         lane_u_mid = (lines_u_d[0] + lines_u_d[1])/2.0
 
-        weeder_pos_pix = wrap_param[5]-wrap_param[0]+int((wrap_param[1]-wrap_param[0])*0.5)
+        weeder_pos_pix = (wrap_param[6]-wrap_param[0]+int((wrap_param[1]-wrap_param[0])*0.5)) * (self.wrap_img_size_u/((wrap_param[1]-wrap_param[0])*2))
+        print('weeder_pos_pix = %f' % weeder_pos_pix)
 
-        # lane_u_offset = lane_u_mid - weeder_pos_pix
-        lane_u_offset = lane_u_mid-(self.wrap_img_size_u / 2.0)
+        lane_u_offset = lane_u_mid - weeder_pos_pix
+        print('lane_u_offset = %f' % lane_u_offset)
+        # lane_u_offset = lane_u_mid-(self.wrap_img_size_u / 2.0)
 
         # y coord of the machine is pointing to left
         lane_y_offset = -lane_u_offset*(self.param['weeder']['farm_lane_dist']/(lines_u_d[1]-lines_u_d[0]))
+
+        # apply max shift
+        if lane_y_offset > self.param['weeder']['weeder_cmd_max_shift']:
+            lane_y_offset = self.param['weeder']['weeder_cmd_max_shift']
+        elif lane_y_offset < (-self.param['weeder']['weeder_cmd_max_shift']):
+            lane_y_offset = -self.param['weeder']['weeder_cmd_max_shift']
 
         weeder_cmd = lane_y_offset + self.weeder_pos
 
@@ -616,13 +624,8 @@ class lane_detector:
             if self.weeder_cmd_delay:
                 self.weeder_cmd = self.weeder_cmd_buff[0]
             else:
-                self.weeder_cmd = self.weeder_cmd_buff[-1]  # extract the most recent position shift
-
-            # apply max shift
-            if self.weeder_cmd > self.param['weeder']['weeder_cmd_max_shift']:
-                self.weeder_cmd = self.param['weeder']['weeder_cmd_max_shift']
-            elif self.weeder_cmd < (-self.param['weeder']['weeder_cmd_max_shift']):
-                self.weeder_cmd = -self.param['weeder']['weeder_cmd_max_shift']
+                # self.weeder_cmd = self.weeder_cmd_buff[-1]  # extract the most recent position shift
+                self.weeder_cmd = weeder_cmd
 
             self.ctl_time_pre = cur_time
 
