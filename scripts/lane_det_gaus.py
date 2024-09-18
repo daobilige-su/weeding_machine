@@ -435,39 +435,35 @@ class lane_detector:
             plant_seg_guas = cv2.resize(plant_seg_guas, (int(self.wrap_img_size_u), int(plant_seg_guas.shape[0] * (self.wrap_img_size_u / plant_seg_guas.shape[1]))))
 
         cv_image_lines = cv_image.copy()
-        img_size = plant_seg_guas.shape
+        img_size = plant_seg_guas.shape  # image size after wrapping
 
+        # track previous line det results
         if self.lane_det_track_img is None:
             self.lane_det_track_img = np.zeros((img_size[0], img_size[1]))
-
-        track_on = 1
-        track_img_pre_weight = 0.5
+        track_on = self.param['lane_det']['track_on']
+        track_img_pre_weight = self.param['lane_det']['track_img_pre_weight']
         if track_on:
             if np.max(self.lane_det_track_img)>0.01:
                 plant_seg_guas = plant_seg_guas + self.lane_det_track_img * track_img_pre_weight
 
-        plant_seg_guas_lines = np.stack(((plant_seg_guas * (255.0 / np.max(plant_seg_guas))).astype(np.uint8),) * 3, axis=-1)
-
-        x_range = np.array([x for x in range(int(img_size[1]/2.0))])
-        y_range = np.array([x for x in range(img_size[0])])
+        # prepare vars for searching best two parallel lines
+        x_range = np.array([x for x in range(int(img_size[1]/2.0))])  # u ranges in wrapped image
+        y_range = np.array([x for x in range(img_size[0])])  # v ranges in wrapped image
+        # left line's theta angle from wrap_param, i.e. to find ref's left line theta
         ll_theta_from_wrap_param = -np.rad2deg(np.arctan2(((self.wrap_param[1]-self.wrap_param[0])/2.0) - ((self.wrap_param[3]-self.wrap_param[2])/2.0),
                                                           (self.wrap_param[4] - self.wrap_param[5])))
-        theta_range = np.array([theta for theta in range(-10, 10 + 1)]) + ll_theta_from_wrap_param
+        theta_range = np.array([theta for theta in range(-self.param['lane_det']['theta_range'], self.param['lane_det']['theta_range'] + 1)]) \
+                      + ll_theta_from_wrap_param  # theta range to search from
 
-        # inter h
+        # ref left and right lines' intersection point's v coord dist from the bottom of the image
         inter_h = ((self.wrap_param[1]-self.wrap_param[0]) / ((self.wrap_param[1]-self.wrap_param[0]) - (self.wrap_param[3]-self.wrap_param[2]))) * self.wrap_img_size[0]
-        shift_range = np.array([x for x in range(-10, 10 + 1)])
+        shift_range = np.array([x for x in range(-self.param['lane_det']['shift_range'], self.param['lane_det']['theta_range'] + 1)])
 
-        # his = np.zeros((img_size[1], theta_range.shape[0]))
+        # construct 3D hist for search best left and right lines,
+        # his_3d: [search left line's bot u, left line's theta, right line's shift from left line's bot u + ref lane widht]
         his_3d = np.zeros((x_range.shape[0], theta_range.shape[0], shift_range.shape[0]))
 
-
-
-        # t1 = time.time()
-        # print('t1 = %f' % (t1-t0))
-
-        # handle.GrayScaleHoughLine.argtypes = [ctypes.POINTER(ctypes.c_double)]
-        # res = handle.GrayScaleHoughLine(np.array([0.0, 1.0]).ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+        # prepare vars for C++ based hist computation operation
         cvar_img_size_u = int(self.wrap_img_size[1])
         cvar_img_size_v = int(self.wrap_img_size[0])
         cvar_x_range_num = int(x_range.shape[0])
@@ -483,6 +479,7 @@ class lane_detector:
         # t21 = time.time()
         # print('t21 = %f' % (t21 - t0))
 
+        # compute hist 3D: np_cvar_his, using C++
         self.cfunc_handle.GrayScaleHoughLine(cvar_img_size_u, cvar_img_size_v, cvar_x_range_num, cvar_y_range_num, cvar_theta_range, cvar_theta_range_num,
                                              cvar_shift_range, cvar_shift_range_num, cvar_inter_h,
                                              cvar_plant_seg_guas, np_cvar_his.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
@@ -490,52 +487,10 @@ class lane_detector:
         # t22 = time.time()
         # print('t22 = %f' % (t22 - t0))
 
-        his_3d = np_cvar_his.reshape((x_range.shape[0], theta_range.shape[0], shift_range.shape[0])).copy()
+        his_3d = np_cvar_his.reshape((x_range.shape[0], theta_range.shape[0], shift_range.shape[0])).copy()  # recover its 3D shape
 
-
-        # for u_idx in range(x_range.shape[0]):
-        #     u = x_range[u_idx]
-        #
-        #     for theta_idx in range(theta_range.shape[0]):
-        #         theta = theta_range[theta_idx]
-        #
-        #         # x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * (img_size[0]-1))
-        #         x = -np.tan(np.deg2rad(theta)) * y_range + (u + np.tan(np.deg2rad(theta)) * 0)
-        #         y = y_range.copy()
-        #
-        #         x_valid = x[(0 <= x) & (x < img_size[1])]
-        #         y_valid = y[(0 <= x) & (x < img_size[1])]
-        #
-        #         x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-        #         y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-        #
-        #         # his[u_idx, theta_idx] = np.sum(plant_seg_guas[(img_size[0]-1)-y_valid.astype(int), x_valid.astype(int)])
-        #         ll_heur = np.sum(plant_seg_guas[(img_size[0]-1)-y_valid.astype(int), x_valid.astype(int)])
-        #
-        #         for shift_idx in range(shift_range.shape[0]):
-        #             shift = shift_range[shift_idx]
-        #
-        #             rl_u = u + self.wrap_img_size[1]/2.0 + shift  # right line bottom u
-        #
-        #             inter_u = u + inter_h * np.tan(-np.deg2rad(theta))  # u of the top intersection point of left and right line
-        #
-        #             rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))
-        #
-        #             x = -np.tan(np.deg2rad(rl_theta)) * y_range + (rl_u + np.tan(np.deg2rad(rl_theta)) * 0)
-        #             y = y_range.copy()
-        #
-        #             x_valid = x[(0 <= x) & (x < img_size[1])]
-        #             y_valid = y[(0 <= x) & (x < img_size[1])]
-        #
-        #             x_valid = x_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-        #             y_valid = y_valid[(0 <= y_valid) & (y_valid < img_size[0])]
-        #
-        #             rl_heur = np.sum(plant_seg_guas[(img_size[0] - 1) - y_valid.astype(int), x_valid.astype(int)])
-        #
-        #             his_3d[u_idx, theta_idx, shift_idx] = ll_heur + rl_heur
-
+        # from previous line det results, only search left line's bot u from the local region of the previous det result
         his_3d_u_track = his_3d.copy() * 0
-
         track_u_width = 5
         if self.lane_det_track_u is not None:
             his_3d_u_track[int(max(0, self.lane_det_track_u[0]-track_u_width)) : int(min(self.lane_det_track_u[0]+track_u_width, img_size[1])), :, :] = \
@@ -543,18 +498,21 @@ class lane_detector:
         else:
             his_3d_u_track = his_3d.copy()
 
+        # get the best two lines
         max_idx = np.unravel_index(np.argmax(his_3d_u_track), his_3d_u_track.shape)
 
-        ll_u = x_range[max_idx[0]]
-        ll_theta = theta_range[max_idx[1]]
-        rl_u = ll_u + self.wrap_img_size[1]/2.0 + shift_range[max_idx[2]]
-        inter_u = ll_u + inter_h * np.tan(-np.deg2rad(ll_theta))
-        rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))
+        # collect left and right lines' params
+        ll_u = x_range[max_idx[0]]  # left line's bot u
+        ll_theta = theta_range[max_idx[1]]  # left line's theta
+        rl_u = ll_u + self.wrap_img_size[1]/2.0 + shift_range[max_idx[2]]  # right line's bot u
+        inter_u = ll_u + inter_h * np.tan(-np.deg2rad(ll_theta))  # left and right lines intersection point's u coord
+        rl_theta = np.rad2deg(np.arctan2(rl_u - inter_u, inter_h))  # right line's theta
 
         lane_u_d = np.array([ll_u, rl_u])
         lane_theta = np.array([ll_theta, rl_theta])
         lane_u_u = np.array([-np.tan(np.deg2rad(lane_theta[0]))*img_size[0] + lane_u_d[0], -np.tan(np.deg2rad(lane_theta[1]))*img_size[0] + lane_u_d[1]])
 
+        plant_seg_guas_lines = np.stack(((plant_seg_guas * (255.0 / np.max(plant_seg_guas))).astype(np.uint8),) * 3, axis=-1)
         # plant_seg_guas_lines = np.stack((plant_seg_guas,) * 3, axis=-1)
         cv2.line(plant_seg_guas_lines, (int(lane_u_d[0]), img_size[0]-1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
         cv2.line(plant_seg_guas_lines, (int(lane_u_d[1]), img_size[0]-1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)

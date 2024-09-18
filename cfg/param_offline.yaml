@@ -27,6 +27,10 @@ lane_det:
   wrap_param_left_cam: [102, 223, 152, 198, 174,  16, 162]  # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_param_right_cam: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_img_size_u: 100
+  track_on: 1
+  track_img_pre_weight: 0.5
+  theta_range: 10 # search left line's theta angle from [-theta_range + ref_theta, theta_range + ref_theta]
+  shift_range: 10 # search right line's bottom u coords from [-shift_range + left_line_bot_u + ref_lane_width, shift_range + left_line_bot_u + ref_lane_width]
 
 weeder:
   farm_lane_dist: 0.4
