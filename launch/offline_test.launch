@@ -23,6 +23,6 @@
     <!--     weeder_cmd_serial_comm -->
     <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/>
 
-        logger
+    <!--  logger -->
     <node pkg="weeding_machine" type="logger.py" name="logger" output="screen"/>
 </launch>

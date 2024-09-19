@@ -89,7 +89,7 @@ class lane_detector:
         self.wrap_param = None  # dynamically change according to left and right cam selection
         self.wrap_img_size = None
         self.wrap_H = None  # dynamically change according to left and right cam selection
-
+        self.resize_proportion = None # proportion of resize operation in image wrapping
 
         self.cfunc_handle = ctypes.CDLL(self.pkg_path + "libGrayScaleHoughLine.so") # cpp function call
         self.lane_det_track_img = None
@@ -108,6 +108,7 @@ class lane_detector:
             self.weeder_cmd_buff = np.zeros((int(self.param['weeder']['cam_weeder_dist']/self.param['weeder']['cmd_dist']),))
         self.ctl_time_pre = rospy.get_time()
         self.weeder_cmd_delay = self.param['weeder']['weeder_cmd_delay']
+        self.lane_y_offset = 0.0
 
         # logging
         self.log_on = self.param['log']['enable']
@@ -253,6 +254,7 @@ class lane_detector:
             return
         self.wrap_img_size = np.array([int((self.wrap_param[4] - self.wrap_param[5] + 1) *
                                            (self.wrap_img_size_u / (2 * (self.wrap_param[1] - self.wrap_param[0])))), self.wrap_img_size_u])
+        self.resize_proportion = (self.wrap_img_size_u / ((self.wrap_param[1] - self.wrap_param[0]) * 2.0))
 
         if cv_image is None:
             if self.log_on:
@@ -353,8 +355,15 @@ class lane_detector:
             log_msg.data = str(rospy.get_time()) + ': current weeder_speed = ' + str(self.weeder_speed)
             self.log_msg_pub.publish(log_msg)
             rospy.sleep(0.001)
+            log_msg.data = str(rospy.get_time()) + ': lane center Y offset = ' + str(self.lane_y_offset)
+            self.log_msg_pub.publish(log_msg)
+            rospy.sleep(0.001)
             if weeder_cmd is not None:
-                log_msg.data = str(rospy.get_time()) + ': new weeder_cmd = ' +str(weeder_cmd)
+                log_msg.data = str(rospy.get_time()) + ': new lane det weeder_cmd = ' +str(weeder_cmd)
+                self.log_msg_pub.publish(log_msg)
+                rospy.sleep(0.001)
+            else:
+                log_msg.data = str(rospy.get_time()) + ': no new lane det weeder_cmd sent. '
                 self.log_msg_pub.publish(log_msg)
                 rospy.sleep(0.001)
 
@@ -433,6 +442,8 @@ class lane_detector:
             plant_seg_guas = cv2.warpPerspective(plant_seg_guas, self.wrap_H, (plant_seg_guas.shape[1], plant_seg_guas.shape[0]))
 
             # resize
+            cv_image_bf_resize = cv_image.copy()  # save img before resize
+            plant_seg_guas_bf_resize = plant_seg_guas.copy()  # save img before resize
             cv_image = cv2.resize(cv_image, (int(self.wrap_img_size_u), int(cv_image.shape[0] * (self.wrap_img_size_u / cv_image.shape[1]))))
             plant_seg_guas = cv2.resize(plant_seg_guas, (int(self.wrap_img_size_u), int(plant_seg_guas.shape[0] * (self.wrap_img_size_u / plant_seg_guas.shape[1]))))
 
@@ -533,11 +544,20 @@ class lane_detector:
         cv2.line(plant_seg_guas_lines, (int(ref_lines_u_d[1]), img_size[0]-1), (int(ref_lines_u_u[1]), 0), (255, 0, 0), 1, cv2.LINE_AA)
 
         # raw rgb image + lines image
-        cv_image_lines = cv_image.copy()
-        cv2.line(cv_image_lines, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
-        cv2.line(cv_image_lines, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)
-        cv2.line(cv_image_lines, (int(ref_lines_u_d[0]), img_size[0]-1), (int(ref_lines_u_u[0]), 0), (255, 0, 0), 1, cv2.LINE_AA)
-        cv2.line(cv_image_lines, (int(ref_lines_u_d[1]), img_size[0]-1), (int(ref_lines_u_u[1]), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        # cv_image_lines = cv_image.copy()
+        # cv2.line(cv_image_lines, (int(lane_u_d[0]), img_size[0] - 1), (int(lane_u_u[0]), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        # cv2.line(cv_image_lines, (int(lane_u_d[1]), img_size[0] - 1), (int(lane_u_u[1]), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        # cv2.line(cv_image_lines, (int(ref_lines_u_d[0]), img_size[0]-1), (int(ref_lines_u_u[0]), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        # cv2.line(cv_image_lines, (int(ref_lines_u_d[1]), img_size[0]-1), (int(ref_lines_u_u[1]), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        cv_image_lines = cv_image_bf_resize.copy()  # show rgb image with better resolution
+        cv2.line(cv_image_lines, (int(lane_u_d[0]*(1.0/self.resize_proportion)), int((img_size[0]-1)*(1.0/self.resize_proportion))),
+                 (int(lane_u_u[0]*(1.0/self.resize_proportion)), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(cv_image_lines, (int(lane_u_d[1]*(1.0/self.resize_proportion)), int((img_size[0]-1)*(1.0/self.resize_proportion))),
+                 (int(lane_u_u[1]*(1.0/self.resize_proportion)), 0), (0, 255, 0), 1, cv2.LINE_AA)
+        cv2.line(cv_image_lines, (int(ref_lines_u_d[0]*(1.0/self.resize_proportion)), int((img_size[0]-1)*(1.0/self.resize_proportion))),
+                 (int(ref_lines_u_u[0]*(1.0/self.resize_proportion)), 0), (255, 0, 0), 1, cv2.LINE_AA)
+        cv2.line(cv_image_lines, (int(ref_lines_u_d[1]*(1.0/self.resize_proportion)), int((img_size[0]-1)*(1.0/self.resize_proportion))),
+                 (int(ref_lines_u_u[1]*(1.0/self.resize_proportion)), 0), (255, 0, 0), 1, cv2.LINE_AA)
 
         lines = np.block([[lane_u_d], [lane_u_u]]) # down pixel's  and up pixel's u for a line
 
@@ -579,6 +599,7 @@ class lane_detector:
         elif lane_y_offset < (-self.param['weeder']['weeder_cmd_max_shift']):
             lane_y_offset = -self.param['weeder']['weeder_cmd_max_shift']
 
+        self.lane_y_offset = lane_y_offset
         weeder_cmd = lane_y_offset + self.weeder_pos
 
         # after a fixed distance, send weeder control cmd

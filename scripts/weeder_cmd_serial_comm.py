@@ -50,6 +50,10 @@ class CmdSender:
         self.receive_timer = rospy.Timer(rospy.Duration(0.1),
                                          self.receive_data)  # Set timer to 0.1 seconds for receiving
 
+        # logging
+        self.log_on = self.param['log']['enable']
+        self.log_msg_pub = rospy.Publisher('/log_msg', String, queue_size=2)
+
     def __del__(self):
         if self.hw_action:
             self.ser.close()
@@ -83,6 +87,11 @@ class CmdSender:
             if self.weeder_data is not None:
                 self.ser.write(self.weeder_data.encode())
                 # self.weeder_data = None  # Clear after sending
+                if self.log_on:
+                    log_msg = String()
+                    log_msg.data = str(rospy.get_time()) + ': [SERIAL] sent weeder cmd, ' + str(self.weeder_data)
+                    self.log_msg_pub.publish(log_msg)
+                    rospy.sleep(0.001)
 
     def weeder_sim_status_cb(self, msg):
         self.default_weeder_speed = msg.data[0]
@@ -102,10 +111,17 @@ class CmdSender:
                     if feedback_data.startswith("Weeder_speed,"):
                         speed, pos = self.extract_speed_and_pos(feedback_data[13:])
 
+                        if self.log_on:
+                            log_msg = String()
+                            log_msg.data = str(rospy.get_time()) + ': [SERIAL] received weeder speed=' + str(
+                                speed) + ', pos=' + str(pos)
+                            self.log_msg_pub.publish(log_msg)
+                            rospy.sleep(0.001)
+
                         # publish weeder status
-                        weeder_speed_pos_msg = Float32MultiArray()  # TODO
-                        weeder_speed_pos_msg.data = [speed, pos]  # TODO
-                        self.speed_pos_pub.publish(weeder_speed_pos_msg)  # TODO
+                        weeder_speed_pos_msg = Float32MultiArray()
+                        weeder_speed_pos_msg.data = [speed, pos]
+                        self.speed_pos_pub.publish(weeder_speed_pos_msg)
 
                     else:
                         msg = String()
