@@ -12,10 +12,11 @@ cam:
 #    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
     K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
 #    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
-    T: [0, 0, -0.65, -0.03490659, 0, 0.9424778] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
+    T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
   right:
-    topic: /right_rgb_cam/image_raw
-    K: [159.99999300617776, 0.0, 160.0, 0.0, 159.99999300617776, 120.0, 0.0, 0.0, 1.0]
+#    topic: /right_rgb_cam/image_raw
+    topic: /camera/image_raw
+    K: [226.2, 0.0, 172.5, 0.0, 225.7, 109.4, 0.0, 0.0, 1.0]
     T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
 
 lane_det:
@@ -24,8 +25,8 @@ lane_det:
   wrap_img_on: 1
   # wrap_param: [180, 319, 200, 0, 239, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
   # wrap_param: [120, 225, 180, 0, 220, 250] # [left lane bot pix u, right lane bot pix u, mid lane top pix u, top v, bot v, weeder bot u]
-  wrap_param_left_cam: [102, 223, 152, 198, 174,  16, 162]  # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
-  wrap_param_right_cam: [139, 231, 159, 189, 214,   4, 185] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
+  wrap_param_left_cam: [128, 241, 160, 189, 239,   0, 184]  # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
+  wrap_param_right_cam: [139, 226, 156, 197, 188,  41, 182] # [left lane bot pix u, right lane bot pix u, left lane top pix u, right lane top pix u, bot v, top v, weeder bot u]
   wrap_img_size_u: 100
   track_on: 1
   track_line_width: 1
@@ -36,7 +37,8 @@ lane_det:
   track_u_width: 5
 
 weeder:
-  farm_lane_dist: 0.4
+  farm_lane_dist_left_cam: 0.4
+  farm_lane_dist_right_cam: 0.4
   def_speed: 0.5 # default weeder speed, m/s
   def_pos: 0.0
   cam_weeder_dist: 1.6

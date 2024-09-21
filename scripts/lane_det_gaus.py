@@ -114,6 +114,9 @@ class lane_detector:
         self.log_on = self.param['log']['enable']
         self.log_msg_pub = rospy.Publisher('/log_msg', String, queue_size=2)
 
+        # # TODO: TEST
+        # self.test_t = rospy.get_time()
+
         return
 
     # compute left and right camera's wrap H matrix
@@ -206,8 +209,9 @@ class lane_detector:
             self.cam_to_use = 1
             rospy.logwarn('right camera is selected.')
         else:
-            rospy.logwarn('lane_det: not enough plant area detected when selecting camera.')
-            return False
+            rospy.logwarn('lane_det: not enough plant area detected when selecting camera. using camera 1')
+            self.cam_to_use = 0
+            # return False
 
         return True
 
@@ -224,6 +228,7 @@ class lane_detector:
         choose_cam_cur_time = rospy.get_time()
         if choose_cam_cur_time - self.choose_cam_pre_time >= self.cam_sel_time_interval:
             self.select_cam()
+            self.lane_det_track_img = None  # re-initialize tracking of the lane det result
             self.choose_cam_pre_time = rospy.get_time()
 
             t01 = rospy.get_time()
@@ -231,6 +236,17 @@ class lane_detector:
                 log_msg.data = str(t01) + ': finished camera selection process.'
                 self.log_msg_pub.publish(log_msg)
                 rospy.sleep(0.001)
+
+        # # TODO: TEST
+        # t = rospy.get_time()
+        # if t - self.test_t > 5:
+        #     if self.cam_to_use == 0:
+        #         self.cam_to_use = 1
+        #     else:
+        #         self.cam_to_use = 0
+        #     self.lane_det_track_img = None
+        #     self.test_t = t
+        #     rospy.logwarn('changed cam to cam: ' + str(self.cam_to_use))
 
         # select left or right camera image, and their corresponding params for lane detection
         if self.cam_to_use == 0:
@@ -456,7 +472,7 @@ class lane_detector:
         track_img_pre_weight = self.param['lane_det']['track_img_pre_weight']
         if track_on:
             if np.max(self.lane_det_track_img)>0.01:
-                plant_seg_guas = plant_seg_guas + self.lane_det_track_img * track_img_pre_weight
+                plant_seg_guas = plant_seg_guas + self.lane_det_track_img * track_img_pre_weight  # TODO
                 plant_seg_guas[plant_seg_guas>1] = 1
 
         # prepare vars for searching best two parallel lines
@@ -591,7 +607,13 @@ class lane_detector:
         # lane_u_offset = lane_u_mid-(self.wrap_img_size_u / 2.0)
 
         # y coord of the machine is pointing to left
-        lane_y_offset = -lane_u_offset*(self.param['weeder']['farm_lane_dist']/(lines_u_d[1]-lines_u_d[0]))
+        if self.cam_to_use == 0:
+            lane_y_offset = -lane_u_offset*(self.param['weeder']['farm_lane_dist_left_cam']/(lines_u_d[1]-lines_u_d[0]))
+        elif self.cam_to_use == 1:
+            lane_y_offset = -lane_u_offset*(self.param['weeder']['farm_lane_dist_right_cam']/(lines_u_d[1]-lines_u_d[0]))
+        else:
+            rospy.logwarn('lane_det: unknown camera selection.')
+            return
 
         # apply max shift
         if lane_y_offset > self.param['weeder']['weeder_cmd_max_shift']:
