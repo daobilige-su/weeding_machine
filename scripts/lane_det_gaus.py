@@ -99,6 +99,7 @@ class lane_detector:
         # weeder pub, sub and vars
         self.weeder_speed = self.param['weeder']['def_speed']
         self.weeder_pos = self.param['weeder']['def_pos']
+        self.weeder_status = self.param['weeder']['def_status']
         self.weeder_control_pub = rospy.Publisher('/weeder_cmd', Float32MultiArray, queue_size=2)
         self.weeder_speed_pos_sub = rospy.Subscriber('/weeder_speed_pos', Float32MultiArray, self.weeder_speed_pos_cb)
         self.weeder_cmd = 0
@@ -150,6 +151,7 @@ class lane_detector:
     def weeder_speed_pos_cb(self, msg):
         self.weeder_speed = msg.data[0]
         self.weeder_pos = msg.data[1]
+        self.weeder_status = msg.data[2]
 
     # sub for left cam img, store it in member var and call line detection if left cam is selected.
     def left_img_cb(self, msg):
@@ -462,6 +464,8 @@ class lane_detector:
             plant_seg_guas_bf_resize = plant_seg_guas.copy()  # save img before resize
             cv_image = cv2.resize(cv_image, (int(self.wrap_img_size_u), int(cv_image.shape[0] * (self.wrap_img_size_u / cv_image.shape[1]))))
             plant_seg_guas = cv2.resize(plant_seg_guas, (int(self.wrap_img_size_u), int(plant_seg_guas.shape[0] * (self.wrap_img_size_u / plant_seg_guas.shape[1]))))
+        else:
+            cv_image_bf_resize = cv_image.copy()  # save img before resize
 
         img_size = plant_seg_guas.shape  # image size after wrapping
 
@@ -550,6 +554,12 @@ class lane_detector:
             lane_u_d = ref_lines_u_d.copy()  # two lines' bottom points' u coord
             lane_theta = ref_lines_theta.copy()  # two lines' theta
             lane_u_u = ref_lines_u_u.copy()  # two lines' upper points' u coord
+
+        if self.weeder_status==0:  # if weeder is up, don't detect lines
+            lane_u_d = ref_lines_u_d.copy()  # two lines' bottom points' u coord
+            lane_theta = ref_lines_theta.copy()  # two lines' theta
+            lane_u_u = ref_lines_u_u.copy()  # two lines' upper points' u coord
+
 
         # plant seg + lines image
         plant_seg_guas_lines = np.stack(((plant_seg_guas * 255.0).astype(np.uint8),) * 3, axis=-1)

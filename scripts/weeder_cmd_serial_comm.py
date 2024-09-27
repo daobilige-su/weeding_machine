@@ -109,18 +109,18 @@ class CmdSender:
                     feedback_data = data.decode('GBK')
                     print(feedback_data)
                     if feedback_data.startswith("Weeder_speed,"):
-                        speed, pos = self.extract_speed_and_pos(feedback_data[13:])
+                        speed, pos, status = self.extract_speed_and_pos_and_status(feedback_data[13:])
 
                         if self.log_on:
                             log_msg = String()
                             log_msg.data = str(rospy.get_time()) + ': [SERIAL] received weeder speed=' + str(
-                                speed) + ', pos=' + str(pos)
+                                speed) + ', pos=' + str(pos) + ', status=' + str(status)
                             self.log_msg_pub.publish(log_msg)
                             rospy.sleep(0.001)
 
                         # publish weeder status
                         weeder_speed_pos_msg = Float32MultiArray()
-                        weeder_speed_pos_msg.data = [speed, pos]
+                        weeder_speed_pos_msg.data = [speed, pos, status]
                         self.speed_pos_pub.publish(weeder_speed_pos_msg)
 
                     else:
@@ -133,14 +133,15 @@ class CmdSender:
                 rospy.logerr("Error receiving data: %s", str(e))
 
     # func for extracting weeder speed and position
-    def extract_speed_and_pos(self, speed_comma_pos):
-        speed_dm_str, pos_str, _ = speed_comma_pos.split(',')
+    def extract_speed_and_pos_and_status(self, speed_comma_pos_comma_status):
+        speed_dm_str, pos_mm_str, status_str, _ = speed_comma_pos_comma_status.split(',')
         speed = float(speed_dm_str) / 10.0  # dm/s to m/s
-        if pos_str[-1] == '\n':
-            pos_str = pos_str[:-1]
-        pos = float(pos_str)/1000.0  # mm to m
+        # if pos_str[-1] == '\n':
+        #     pos_str = pos_str[:-1]
+        pos = float(pos_mm_str)/1000.0  # mm to m
+        status = int(1 - int(status_str))  # 1: on, 0: off
 
-        return speed, pos
+        return speed, pos, status
 
 
 def main(args):

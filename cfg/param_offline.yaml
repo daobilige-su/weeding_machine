@@ -41,6 +41,7 @@ weeder:
   farm_lane_dist_right_cam: 0.4
   def_speed: 0.5 # default weeder speed, m/s
   def_pos: 0.0
+  def_status: 1
   cam_weeder_dist: 1.6
   cmd_dist: -1 # 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
   cmd_dist_def: 0.1 # the minimum distance the weeder should travel for the new control cmd to be sent
