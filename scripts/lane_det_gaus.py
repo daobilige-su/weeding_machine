@@ -20,7 +20,7 @@ import matplotlib as mpl
 from scipy.stats import multivariate_normal
 from scipy import signal
 
-import torch
+# import torch
 
 import rospkg
 import yaml
@@ -45,10 +45,20 @@ class lane_detector:
         self.verbose = self.param['verbose']
         self.img_size = np.array([self.param['cam']['height'], self.param['cam']['width']])
 
-        # yolo5 detection
+        # plant detection using yolo5 / ExG
+        self.segment_mode = self.param['lane_det']['segment_mode']
         self.yolo5_plant_id = self.param['lane_det']['yolo_plant_id']
         self.yolo5_model_path = self.pkg_path + 'weights/' + self.param['lane_det']['yolo_model']
-        self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
+        if self.segment_mode == 1:
+            import torch
+            self.model = torch.hub.load(self.pkg_path + 'yolov5', 'custom', path=self.yolo5_model_path, source='local')
+            rospy.loginfo('using yolo5 based plant segmentation')
+        elif self.segment_mode == 2:
+            self.model = None
+            rospy.loginfo('using ExG based plant segmentation')
+        else:
+            rospy.logerr('unknown segmentation mode, returning...')
+            return
 
         # cam vars, pubs and subs
         self.left_img = None
@@ -195,8 +205,16 @@ class lane_detector:
         right_cv_img = self.resize_img_keep_scale(self.bridge.imgmsg_to_cv2(right_img_msg, "bgr8"))
 
         # get plant segmentation images
-        left_image_seg_bn, image1, left_image_seg_gaus = self.segment_plants_yolo5(left_cv_img)
-        right_image_seg_bn, image2, right_image_seg_gaus = self.segment_plants_yolo5(right_cv_img)
+        if self.segment_mode == 1:
+            left_image_seg_bn, image1, left_image_seg_gaus = self.segment_plants_yolo5(left_cv_img)
+            right_image_seg_bn, image2, right_image_seg_gaus = self.segment_plants_yolo5(right_cv_img)
+        elif self.segment_mode == 2:
+            left_image_seg_bn, image1, left_image_seg_gaus = self.segment_plants_exg(left_cv_img)
+            right_image_seg_bn, image2, right_image_seg_gaus = self.segment_plants_exg(right_cv_img)
+        else:
+            rospy.logerr('unknown segmentation mode, returning...')
+            return False
+
         # compute plant area
         left_plant_area = np.sum(left_image_seg_bn)
         right_plant_area = np.sum(right_image_seg_bn)
@@ -302,8 +320,14 @@ class lane_detector:
             rospy.sleep(0.001)
 
         # (1) segment plants in the image
-        # segment plants with yolov5
-        plant_seg_bn, det_image, plant_seg_gaus = self.segment_plants_yolo5(cv_image)
+        # segment plants with yolov5 / ExG
+        if self.segment_mode == 1:
+            plant_seg_bn, det_image, plant_seg_gaus = self.segment_plants_yolo5(cv_image)
+        elif self.segment_mode == 2:
+            plant_seg_bn, det_image, plant_seg_gaus = self.segment_plants_exg(cv_image)
+        else:
+            rospy.logerr('unknown segmentation mode, returning...')
+            return
 
         # publish segmentation results
         plant_seg_pub = np.asarray((plant_seg_bn * 255).astype(np.uint8))
@@ -322,9 +346,15 @@ class lane_detector:
 
         t1 = rospy.get_time()
         if self.verbose:
-            rospy.loginfo('time consumption until yolo5 based image det and seg = %f' % (t1 - t0))
+            if self.segment_mode == 1:
+                rospy.loginfo('time consumption until yolo5 based image det and seg = %f' % (t1 - t0))
+            elif self.segment_mode == 2:
+                rospy.loginfo('time consumption until ExG based image det and seg = %f' % (t1 - t0))
         if self.log_on:
-            log_msg.data = str(rospy.get_time()) + ': finished yolo5 based image det and seg.'
+            if self.segment_mode == 1:
+                log_msg.data = str(rospy.get_time()) + ': finished yolo5 based image det and seg.'
+            elif self.segment_mode == 2:
+                log_msg.data = str(rospy.get_time()) + ': finished ExG based image det and seg.'
             self.log_msg_pub.publish(log_msg)
             rospy.sleep(0.001)
             log_msg.data = str(rospy.get_time()) + ': time consumption until now = ' + str(t1 - t0)
@@ -402,6 +432,23 @@ class lane_detector:
 
         # return once everything successes
         return
+
+    # segment plants using ExG
+    def segment_plants_exg(self, np_image):
+        # compute ExG index
+        exg_index = 2 * np_image[:, :, 1] - (np_image[:, :, 2] + np_image[:, :, 0])  # ExG = 2G-(R+B)
+
+        # Otsu thresholding
+        ret, otsu_thr = cv2.threshold(exg_index, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # otsu_thr = self.param['lane_det']['exg_thr']
+        image_seg_bn = (exg_index > otsu_thr).astype(float)
+
+        # ma blob img
+        img_seg_ma = image_seg_bn.copy()
+        for n in range(3):
+            img_seg_ma = cv2.GaussianBlur(img_seg_ma, (11, 11), 0)
+
+        return image_seg_bn, np_image, img_seg_ma
 
     # segment plants using yolov5, return a binary image with plant area (1) and everything else (0)
     def segment_plants_yolo5(self, np_image):

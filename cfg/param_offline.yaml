@@ -20,6 +20,8 @@ cam:
     T: [0, 0, -0.65, 0, 0, 0.45378] # t+ypr, cam extrinsic for bird eye view, where map frame is just under the cam
 
 lane_det:
+  segment_mode: 1 # 1: yolov5, 2: ExG
+  exg_thr: 40
   yolo_plant_id: 1
   yolo_model: best_offline21.pt
   wrap_img_on: 1
