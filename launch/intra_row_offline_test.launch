@@ -1,0 +1,18 @@
+<launch>
+    <param name="param_file" type="str" value="$(find weeding_machine)/cfg/intra_row_param_offline.yaml" />
+
+    <!--   rviz -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find weeding_machine)/rviz/intra_row_main.rviz"/>
+
+    <!--     tf_manager -->
+<!--     <node pkg="weeding_machine" type="tf_manager.py" name="tf_manager" output="screen"/> -->
+
+    <!--     lane_det -->
+    <node pkg="weeding_machine" type="intra_row.py" name="intra_row" output="screen"/>
+
+    <!--     weeder_cmd_serial_comm -->
+<!--     <node pkg="weeding_machine" type="weeder_cmd_serial_comm.py" name="weeder_cmd_serial_comm" output="screen"/> -->
+
+    <!--  logger -->
+    <node pkg="weeding_machine" type="logger.py" name="logger" output="screen"/>
+</launch>
